@@ -130,8 +130,8 @@ public:
 
 		m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
 
-		m_sub_scan_topic = this->create_subscription<sensor_msgs::msg::LaserScan>("/scan", 1, std::bind(&NeoLocalizationNode::scan_callback, this, _1));
-		m_sub_map_topic = this->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", 1, std::bind(&NeoLocalizationNode::map_callback, this, _1));
+		m_sub_scan_topic = this->create_subscription<sensor_msgs::msg::LaserScan>("scan", rclcpp::SensorDataQoS(), std::bind(&NeoLocalizationNode::scan_callback, this, _1));
+		m_sub_map_topic = this->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(), std::bind(&NeoLocalizationNode::map_callback, this, _1));
 		m_sub_pose_estimate = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("/initialpose", 1, std::bind(&NeoLocalizationNode::pose_callback, this, _1));
 
 		m_pub_map_tile = this->create_publisher<nav_msgs::msg::OccupancyGrid>("/map_tile", 1);
@@ -140,7 +140,7 @@ public:
 		m_pub_pose_array = this->create_publisher<geometry_msgs::msg::PoseArray>("/particlecloud", 10);
 
 		m_loc_update_timer = create_wall_timer(
-      							500ms, std::bind(&NeoLocalizationNode::loc_update, this));
+      							10ms, std::bind(&NeoLocalizationNode::loc_update, this));
 
 		m_map_update_thread = std::thread(&NeoLocalizationNode::update_loop, this);
 	}
@@ -159,11 +159,14 @@ protected:
 	 */
 	void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 	{
+
 		std::lock_guard<std::mutex> lock(m_node_mutex);
 
-		if(!m_map) {
+		if(!map_received_) {
+			RCLCPP_INFO_ONCE(this->get_logger(), "no map");
 			return;
 		}
+		RCLCPP_INFO_ONCE(this->get_logger(), "map_received");
 		m_scan_buffer[scan->header.frame_id] = scan;
 	}
 
@@ -219,7 +222,7 @@ protected:
 	{
 		std::lock_guard<std::mutex> lock(m_node_mutex);
 
-		if(!m_map || m_scan_buffer.empty()) {
+		if(!map_received_ || m_scan_buffer.empty()) {
 			return;
 		}
 		tf2::Stamped<tf2::Transform> base_to_odom;
@@ -500,6 +503,7 @@ protected:
 	void map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr ros_map)
 	{
 		std::lock_guard<std::mutex> lock(m_node_mutex);
+		map_received_ = true;
 
 		// ROS_INFO_STREAM("NeoLocalizationNode: Got new map with dimensions " << ros_map->info.width << " x " << ros_map->info.height
 				// << " and cell size " << ros_map->info.resolution);
@@ -510,7 +514,7 @@ protected:
 			m_world_to_map = convert_transform_25(tmp);
 		}
 		m_world = ros_map;
-
+		RCLCPP_INFO_STREAM(this->get_logger(), "lets repeat");
 		// reset particle spread to maximum
 		m_sample_std_xy = m_max_sample_std_xy;
 		m_sample_std_yaw = m_max_sample_std_yaw;
@@ -707,6 +711,7 @@ private:
 	Matrix<double, 4, 4> m_world_to_map;
 	std::shared_ptr<GridMap<float>> m_map;			// map tile
 	nav_msgs::msg::OccupancyGrid::SharedPtr m_world;		// whole map
+	bool map_received_ = false;
 
 	int64_t update_counter = 0;
 	std::map<std::string, sensor_msgs::msg::LaserScan::SharedPtr> m_scan_buffer;
