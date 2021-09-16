@@ -23,6 +23,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_ros/buffer.h>
+#include <tf2_ros/create_timer_ros.h>
 #include <chrono>
 #include <memory>
 
@@ -129,8 +130,8 @@ public:
 
 		m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
 
-		m_sub_scan_topic = this->create_subscription<sensor_msgs::msg::LaserScan>("/scan", 1, std::bind(&NeoLocalizationNode::scan_callback, this, _1));
-		m_sub_map_topic = this->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", 1, std::bind(&NeoLocalizationNode::map_callback, this, _1));
+		m_sub_scan_topic = this->create_subscription<sensor_msgs::msg::LaserScan>("scan", rclcpp::SensorDataQoS(), std::bind(&NeoLocalizationNode::scan_callback, this, _1));
+		m_sub_map_topic = this->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(), std::bind(&NeoLocalizationNode::map_callback, this, _1));
 		m_sub_pose_estimate = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("/initialpose", 1, std::bind(&NeoLocalizationNode::pose_callback, this, _1));
 
 		m_pub_map_tile = this->create_publisher<nav_msgs::msg::OccupancyGrid>("/map_tile", 1);
@@ -139,7 +140,7 @@ public:
 		m_pub_pose_array = this->create_publisher<geometry_msgs::msg::PoseArray>("/particlecloud", 10);
 
 		m_loc_update_timer = create_wall_timer(
-      							500ms, std::bind(&NeoLocalizationNode::loc_update, this));
+      							100ms, std::bind(&NeoLocalizationNode::loc_update, this));
 
 		m_map_update_thread = std::thread(&NeoLocalizationNode::update_loop, this);
 	}
@@ -158,11 +159,14 @@ protected:
 	 */
 	void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 	{
+
 		std::lock_guard<std::mutex> lock(m_node_mutex);
 
-		if(!m_map) {
+		if(!map_received_) {
+			RCLCPP_INFO_ONCE(this->get_logger(), "no map");
 			return;
 		}
+		RCLCPP_INFO_ONCE(this->get_logger(), "map_received");
 		m_scan_buffer[scan->header.frame_id] = scan;
 	}
 
@@ -174,19 +178,26 @@ protected:
 		std::vector<scan_point_t> points;
 		tf2::Stamped<tf2::Transform> base_to_odom;
 		tf2::Stamped<tf2::Transform> sensor_to_base;
+		bool callback_timeout = false;
 		try {
 			auto tempTransform = buffer->lookupTransform(m_base_frame, scan->header.frame_id, tf2::TimePointZero);
 			tf2::fromMsg(tempTransform, sensor_to_base);
 		} catch(const std::exception& ex) {
-			// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(scan->header.frame_id, m_base_frame) failed: " << ex.what());
+			RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookupTransform(scan->header.frame_id, m_base_frame) failed: " << ex.what());
 			return points;
 		}
 		try {
-			// buffer->waitForTransform(m_odom_frame, m_base_frame, scan->header.stamp, ros::Duration(m_transform_timeout));
+			auto future = buffer->waitForTransform(
+			m_odom_frame, m_base_frame, scan->header.stamp, tf2::durationFromSec(m_transform_timeout),
+			[&callback_timeout](const tf2_ros::TransformStampedFuture & future)
+			{
+			 future.get();
+			});
+
 			auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
 			tf2::fromMsg(tempTransform, base_to_odom);
 			} catch(const std::exception& ex) {
-			// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
+			RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
 			return points;
 		}
 
@@ -216,18 +227,34 @@ protected:
 // Here
 	void loc_update()
 	{
-		std::lock_guard<std::mutex> lock(m_node_mutex);
+		// std::lock_guard<std::mutex> lock(m_node_mutex);
 
-		if(!m_map || m_scan_buffer.empty()) {
+		if(!map_received_ || m_scan_buffer.empty()) {
 			return;
 		}
 		tf2::Stamped<tf2::Transform> base_to_odom;
+		bool callback_timeout = false;
+        auto create_timer_interface = std::make_shared<tf2_ros::CreateTimerROS>(
+	    this->get_node_base_interface(),
+	    this->get_node_timers_interface());
+
+		rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME);
+		buffer->setCreateTimerInterface(create_timer_interface);
+
+		auto check_transform = buffer->canTransform("odom","base_footprint", tf2::TimePointZero);
 
 		try {
-			auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
+			auto future = buffer->waitForTransform(
+			m_odom_frame, m_base_frame, tf2::TimePointZero, tf2::durationFromSec(100),
+			[&callback_timeout](const tf2_ros::TransformStampedFuture & future)
+			{
+			 future.get();
+			});
+
+			auto tempTransform = buffer->lookupTransform("odom", m_base_frame, tf2::TimePointZero);
 			tf2::fromMsg(tempTransform, base_to_odom);
 		} catch(const std::exception& ex) {
-			// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
+			RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookup 23Transform(m_base_frame, m_odom_frame) failed: " << ex.what());
 			return;
 		}
 
@@ -250,7 +277,7 @@ protected:
 		// check for number of points
 		if(points.size() < m_min_points)
 		{
-			// ROS_WARN_STREAM("NeoLocalizationNode: Number of points too low: " << points.size());
+			RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: Number of points too low: " << points.size());
 			return;
 		}
 
@@ -452,16 +479,21 @@ protected:
 			std::lock_guard<std::mutex> lock(m_node_mutex);
 
 			if(pose->header.frame_id != m_map_frame) {
+				RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: Invalid pose estimate frame");
 				// ROS_WARN_STREAM("NeoLocalizationNode: Invalid pose estimate frame: " << pose->header.frame_id);
 				return;
 			}
 
 
-			// ROS_INFO_STREAM("NeoLocalizationNode: Got new map pose estimate: x=" << map_pose.getOrigin()[0]
-							// << " m, y=" <<  map_pose.getOrigin()[1] << " m, yaw=" << tf::getYaw(map_pose.getRotation()) << " rad");
+
 			tf2::Stamped<tf2::Transform> base_to_odom;
 			tf2::Transform map_pose;
 			tf2::fromMsg(pose->pose.pose, map_pose);
+
+			RCLCPP_INFO_STREAM(this->get_logger(), "NeoLocalizationNode: Got new map pose estimate: x=" << map_pose.getOrigin()[0]
+							<< " m, y=" <<  map_pose.getOrigin()[1]
+							// << " m, yaw=" << tf::getYaw(map_pose.getRotation()) << " rad"
+							);
 
 			try {
 				auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
@@ -499,6 +531,7 @@ protected:
 	void map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr ros_map)
 	{
 		std::lock_guard<std::mutex> lock(m_node_mutex);
+		map_received_ = true;
 
 		// ROS_INFO_STREAM("NeoLocalizationNode: Got new map with dimensions " << ros_map->info.width << " x " << ros_map->info.height
 				// << " and cell size " << ros_map->info.resolution);
@@ -509,7 +542,7 @@ protected:
 			m_world_to_map = convert_transform_25(tmp);
 		}
 		m_world = ros_map;
-
+		RCLCPP_INFO_STREAM(this->get_logger(), "lets repeat");
 		// reset particle spread to maximum
 		m_sample_std_xy = m_max_sample_std_xy;
 		m_sample_std_yaw = m_max_sample_std_yaw;
@@ -706,6 +739,7 @@ private:
 	Matrix<double, 4, 4> m_world_to_map;
 	std::shared_ptr<GridMap<float>> m_map;			// map tile
 	nav_msgs::msg::OccupancyGrid::SharedPtr m_world;		// whole map
+	bool map_received_ = false;
 
 	int64_t update_counter = 0;
 	std::map<std::string, sensor_msgs::msg::LaserScan::SharedPtr> m_scan_buffer;
