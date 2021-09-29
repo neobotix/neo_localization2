@@ -12,6 +12,8 @@
 #include <neo_localization/GridMap.h>
 
 #include "rclcpp/rclcpp.hpp"
+#include <rclcpp/node_options.hpp>
+
 #include <angles/angles.h>
 #include <nav_msgs/msg/odometry.h>
 #include <nav_msgs/msg/occupancy_grid.h>
@@ -34,6 +36,7 @@ using namespace std::chrono_literals;
 #include <random>
 #include <cmath>
 #include <array>
+#include <tf2_ros/create_timer_ros.h>
 using std::placeholders::_1;
 using std::placeholders::_2;
 
@@ -128,6 +131,8 @@ public:
         this->declare_parameter<double>("transform_timeout", 5);
         this->get_parameter("transform_timeout", m_transform_timeout);
 
+		m_map_update_thread = std::thread(&NeoLocalizationNode::update_loop, this);
+
 		m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
 
 		m_sub_scan_topic = this->create_subscription<sensor_msgs::msg::LaserScan>("scan", rclcpp::SensorDataQoS(), std::bind(&NeoLocalizationNode::scan_callback, this, _1));
@@ -140,15 +145,17 @@ public:
 		m_pub_pose_array = this->create_publisher<geometry_msgs::msg::PoseArray>("/particlecloud", 10);
 
 		m_loc_update_timer = create_wall_timer(
-      							10ms, std::bind(&NeoLocalizationNode::loc_update, this));
+      							100ms, std::bind(&NeoLocalizationNode::loc_update, this));
 
-		m_map_update_thread = std::thread(&NeoLocalizationNode::update_loop, this);
+
+	 	buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+
+		transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*buffer);
 	}
 
 	~NeoLocalizationNode()
 	{
 		if(m_map_update_thread.joinable()) {
-			m_map_update_thread.join();
 		}
 	}
 
@@ -178,22 +185,23 @@ protected:
 		std::vector<scan_point_t> points;
 		tf2::Stamped<tf2::Transform> base_to_odom;
 		tf2::Stamped<tf2::Transform> sensor_to_base;
+		bool callback_timeout = false;
 		try {
 			auto tempTransform = buffer->lookupTransform(m_base_frame, scan->header.frame_id, tf2::TimePointZero);
 			tf2::fromMsg(tempTransform, sensor_to_base);
+
 		} catch(const std::exception& ex) {
-			// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(scan->header.frame_id, m_base_frame) failed: " << ex.what());
+			RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookupTransform(scan->header.frame_id, m_base_frame) failed: " << ex.what());
 			return points;
 		}
 		try {
-			// buffer->waitForTransform(m_odom_frame, m_base_frame, scan->header.stamp, ros::Duration(m_transform_timeout));
-			auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
+			auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, scan->header.stamp);
 			tf2::fromMsg(tempTransform, base_to_odom);
 			} catch(const std::exception& ex) {
-			// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
+			RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
 			return points;
 		}
-
+		
 		const Matrix<double, 4, 4> S = convert_transform_3(sensor_to_base);
 		const Matrix<double, 4, 4> L = convert_transform_25(base_to_odom);
 
@@ -221,21 +229,23 @@ protected:
 	void loc_update()
 	{
 		std::lock_guard<std::mutex> lock(m_node_mutex);
-
-		if(!map_received_ || m_scan_buffer.empty()) {
+		if(!map_received_ || m_scan_buffer.empty() || !m_initialized) {
 			return;
 		}
+
 		tf2::Stamped<tf2::Transform> base_to_odom;
 
 		try {
-			auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
+			auto tempTransform = buffer->lookupTransform("odom", m_base_frame, tf2::TimePointZero);
 			tf2::fromMsg(tempTransform, base_to_odom);
 		} catch(const std::exception& ex) {
-			// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
+			RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookup 23Transform(m_base_frame, m_odom_frame) failed: " << ex.what());
 			return;
 		}
-
-		const Matrix<double, 4, 4> L = convert_transform_25(base_to_odom);
+		
+		tf2::Transform base_to_odom_ws(base_to_odom.getRotation(), base_to_odom.getOrigin());
+		
+		const Matrix<double, 4, 4> L = convert_transform_25(base_to_odom_ws);
 		const Matrix<double, 4, 4> T = translate25(m_offset_x, m_offset_y) * rotate25_z(m_offset_yaw);		// odom to map
 
 		const Matrix<double, 3, 1> odom_pose = (L * Matrix<double, 4, 1>{0, 0, 0, 1}).project();
@@ -244,17 +254,20 @@ protected:
 
 		std::vector<scan_point_t> points;
 
+		RCLCPP_INFO_ONCE(this->get_logger(), "map_received");
 		// convert all scans to current base frame
 		for(const auto& scan : m_scan_buffer)
 		{
+			
 			auto scan_points = convert_scan(scan.second, L.inverse());
+
 			points.insert(points.end(), scan_points.begin(), scan_points.end());
 		}
 
-		// check for number of points
+		// // check for number of points
 		if(points.size() < m_min_points)
 		{
-			// ROS_WARN_STREAM("NeoLocalizationNode: Number of points too low: " << points.size());
+			RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: Number of points too low: " << points.size());
 			return;
 		}
 
@@ -263,8 +276,8 @@ protected:
 		pose_array.header.frame_id = m_map_frame;
 
 		// calc predicted grid pose based on odometry
-		const Matrix<double, 3, 1> grid_pose = (m_grid_to_map.inverse() * T * L * Matrix<double, 4, 1>{0, 0, 0, 1}).project();
 
+		const Matrix<double, 3, 1> grid_pose = (m_grid_to_map.inverse() * T * L * Matrix<double, 4, 1>{0, 0, 0, 1}).project();
 		// setup distributions
 		std::normal_distribution<double> dist_x(grid_pose[0], m_sample_std_xy);
 		std::normal_distribution<double> dist_y(grid_pose[1], m_sample_std_xy);
@@ -438,9 +451,9 @@ protected:
 		m_last_odom_pose = odom_pose;
 
 		if(update_counter++ % 10 == 0) {
-			// ROS_INFO_STREAM("NeoLocalizationNode: score=" << float(best_score) << ", grad_uvw=[" << float(grad_std_uvw[0]) << ", " << float(grad_std_uvw[1])
-					// << ", " << float(grad_std_uvw[2]) << "], std_xy=" << float(m_sample_std_xy) << " m, std_yaw=" << float(m_sample_std_yaw)
-					// << " rad, mode=" << mode << "D, " << m_scan_buffer.size() << " scans");
+			RCLCPP_INFO_STREAM(this->get_logger(), 	"NeoLocalizationNode: score=" << float(best_score) << ", grad_uvw=[" << float(grad_std_uvw[0]) << ", " << float(grad_std_uvw[1])
+					<< ", " << float(grad_std_uvw[2]) << "], std_xy=" << float(m_sample_std_xy) << " m, std_yaw=" << float(m_sample_std_yaw)
+					<< " rad, mode=" << mode << "D, " << m_scan_buffer.size() << " scans");
 		}
 
 		// clear scan buffer
@@ -456,22 +469,22 @@ protected:
 			std::lock_guard<std::mutex> lock(m_node_mutex);
 
 			if(pose->header.frame_id != m_map_frame) {
-				// ROS_WARN_STREAM("NeoLocalizationNode: Invalid pose estimate frame: " << pose->header.frame_id);
+				RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: Invalid pose estimate frame");
 				return;
 			}
 
-
-			// ROS_INFO_STREAM("NeoLocalizationNode: Got new map pose estimate: x=" << map_pose.getOrigin()[0]
-							// << " m, y=" <<  map_pose.getOrigin()[1] << " m, yaw=" << tf::getYaw(map_pose.getRotation()) << " rad");
 			tf2::Stamped<tf2::Transform> base_to_odom;
 			tf2::Transform map_pose;
 			tf2::fromMsg(pose->pose.pose, map_pose);
+
+			RCLCPP_INFO_STREAM(this->get_logger(), "NeoLocalizationNode: Got new map pose estimate: x=" << map_pose.getOrigin()[0]
+							<< " m, y=" <<  map_pose.getOrigin()[1]	);
 
 			try {
 				auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
 				tf2::convert(tempTransform, base_to_odom);
 			} catch(const std::exception& ex) {
-				// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
+				RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: "<< ex.what());
 				return;
 			}
 
@@ -505,8 +518,8 @@ protected:
 		std::lock_guard<std::mutex> lock(m_node_mutex);
 		map_received_ = true;
 
-		// ROS_INFO_STREAM("NeoLocalizationNode: Got new map with dimensions " << ros_map->info.width << " x " << ros_map->info.height
-				// << " and cell size " << ros_map->info.resolution);
+		RCLCPP_INFO_STREAM(this->get_logger(), "NeoLocalizationNode: Got new map with dimensions " << ros_map->info.width << " x " << ros_map->info.height
+				<< " and cell size " << ros_map->info.resolution);
 
 		{
 			tf2::Transform tmp;
@@ -514,7 +527,6 @@ protected:
 			m_world_to_map = convert_transform_25(tmp);
 		}
 		m_world = ros_map;
-		RCLCPP_INFO_STREAM(this->get_logger(), "lets repeat");
 		// reset particle spread to maximum
 		m_sample_std_xy = m_max_sample_std_xy;
 		m_sample_std_yaw = m_max_sample_std_yaw;
@@ -525,6 +537,8 @@ protected:
 	 */
 	void update_map()
 	{
+		RCLCPP_INFO_STREAM(this->get_logger(),"Map updates");
+
 		Matrix<double, 4, 4> world_to_map;			// transformation from original grid map (integer coords) to "map frame"
 		Matrix<double, 3, 1> world_pose;			// pose in the original (integer coords) grid map (not map tile)
 		nav_msgs::msg::OccupancyGrid::SharedPtr world;
@@ -539,7 +553,7 @@ protected:
 				auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
 				tf2::fromMsg(tempTransform, base_to_odom);
 			} catch(const std::exception& ex) {
-				// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
+				// RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
 				return;
 			}
 
@@ -587,6 +601,7 @@ protected:
 			std::lock_guard<std::mutex> lock(m_node_mutex);
 			m_map = map;
 			m_grid_to_map = world_to_map * translate25<double>(tile_x * world_scale, tile_y * world_scale);
+			m_initialized = true;
 		}
 
 		const auto tile_origin = (m_grid_to_map * Matrix<double, 4, 1>{0, 0, 0, 1}).project();
@@ -612,8 +627,6 @@ protected:
 		}
 		m_pub_map_tile->publish(ros_grid);
 
-		// ROS_DEBUG_STREAM("NeoLocalizationNode: Got new grid at offset (" << tile_x << ", " << tile_y << ") [iworld], "
-				// "center = (" << tile_center[0] << ", " << tile_center[1] << ") [map]");
 	}
 
 	/*
@@ -621,15 +634,17 @@ protected:
 	 */
 	void update_loop()
 	{
+		RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: update_map() failed:");
+
 		rclcpp::Rate loop_rate(m_map_update_rate);
 		while(rclcpp::ok()) {
 			try {
 				update_map();	// get a new map tile periodically
 			}
 			catch(const std::exception& ex) {
-				// ROS_WARN_STREAM("NeoLocalizationNode: update_map() failed: " << ex.what());
+				RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: update_map() failed:");
 			}
-			loop_rate.sleep();
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 	}
 
@@ -643,6 +658,7 @@ protected:
 			// compose and publish transform for tf package
 			geometry_msgs::msg::TransformStamped pose;
 			// compose header
+			m_offset_time.nanosec = m_offset_time.nanosec + 100000000;
 			pose.header.stamp = m_offset_time;
 			pose.header.frame_id = m_map_frame;
 			pose.child_frame_id = m_odom_frame;
@@ -673,6 +689,7 @@ private:
 	std::shared_ptr<tf2_ros::TransformBroadcaster> m_tf_broadcaster;
 
 	bool m_broadcast_tf = false;
+	bool m_initialized = false;
 	std::string m_base_frame;
 	std::string m_odom_frame;
 	std::string m_map_frame;
@@ -704,7 +721,8 @@ private:
 	double m_offset_yaw = 0;				// current yaw offset between odom and map
 	double m_sample_std_xy = 0;				// current sample spread in xy
 	double m_sample_std_yaw = 0;			// current sample spread in yaw
-	std::unique_ptr<tf2_ros::Buffer> buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+	std::unique_ptr<tf2_ros::Buffer> buffer;
+	std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
 
 	Matrix<double, 3, 1> m_last_odom_pose;
 	Matrix<double, 4, 4> m_grid_to_map;
@@ -730,9 +748,10 @@ int main(int argc, char** argv)
 	rclcpp::init(argc, argv);
     
 	try {
-		auto nh = std::make_shared<NeoLocalizationNode>();
-
-		rclcpp::spin(nh);
+		auto nh = std::make_shared<NeoLocalizationNode>() ;
+	    // rclcpp::executors::MultiThreadedExecutor executor {rclcpp::ExecutorOptions(), 2, true};
+    	// executor.add_node(nh);
+ 		rclcpp::spin(nh);
 	}
 	catch(const std::exception& ex) {
 		std::cout<<"NeoLocalizationNode: " << ex.what() << std::endl;
@@ -741,4 +760,5 @@ int main(int argc, char** argv)
 
 	return 0;
 }
+
 
