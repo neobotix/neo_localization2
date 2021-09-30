@@ -57,79 +57,79 @@ public:
 	NeoLocalizationNode(): Node("neo_localization_node")
 	{
 		this->declare_parameter<bool>("broadcast_tf", true);
-        this->get_parameter_or("broadcast_tf", m_broadcast_tf, true);
+		this->get_parameter_or("broadcast_tf", m_broadcast_tf, true);
 
-        this->declare_parameter<std::string>("base_frame", "base_link");
-        this->get_parameter("base_frame", m_base_frame);
+		this->declare_parameter<std::string>("base_frame", "base_link");
+		this->get_parameter("base_frame", m_base_frame);
 
-        this->declare_parameter<std::string>("odom_frame", "odom");
-        this->get_parameter("odom_frame", m_odom_frame);
+		this->declare_parameter<std::string>("odom_frame", "odom");
+		this->get_parameter("odom_frame", m_odom_frame);
 
-        this->declare_parameter<std::string>("map_frame", "map");
-        this->get_parameter("map_frame", m_map_frame);
+		this->declare_parameter<std::string>("map_frame", "map");
+		this->get_parameter("map_frame", m_map_frame);
 
-        this->declare_parameter<int>("map_size", 1000);
-        this->get_parameter("map_size", m_map_size);
+		this->declare_parameter<int>("map_size", 1000);
+		this->get_parameter("map_size", m_map_size);
 
-        this->declare_parameter<int>("map_downscale", 0);
-        this->get_parameter("map_downscale", m_map_downscale);
+		this->declare_parameter<int>("map_downscale", 0);
+		this->get_parameter("map_downscale", m_map_downscale);
 
-        this->declare_parameter<int>("num_smooth", 5);
-        this->get_parameter("num_smooth", m_num_smooth);
+		this->declare_parameter<int>("num_smooth", 5);
+		this->get_parameter("num_smooth", m_num_smooth);
 
-        this->declare_parameter<int>("sample_rate", 5);
-        this->get_parameter("sample_rate", m_sample_rate);
+		this->declare_parameter<int>("sample_rate", 5);
+		this->get_parameter("sample_rate", m_sample_rate);
 
-        this->declare_parameter<int>("solver_iterations", 5);
-        this->get_parameter("solver_iterations", m_solver_iterations);
+		this->declare_parameter<int>("solver_iterations", 5);
+		this->get_parameter("solver_iterations", m_solver_iterations);
 
-        this->declare_parameter<int>("min_points", 5);
-        this->get_parameter("min_points", m_min_points);
+		this->declare_parameter<int>("min_points", 5);
+		this->get_parameter("min_points", m_min_points);
 
-        this->declare_parameter<double>("map_update_rate", 5);
-        this->get_parameter("map_update_rate", m_map_update_rate);
+		this->declare_parameter<double>("map_update_rate", 0.5);
+		this->get_parameter("map_update_rate", m_map_update_rate);
 
-        this->declare_parameter<double>("loc_update_rate", 5);
-        this->get_parameter("loc_update_rate", m_loc_update_rate);
+		this->declare_parameter<int>("loc_update_time", 100.);
+		this->get_parameter("loc_update_time", m_loc_update_time_ms);
 
-        this->declare_parameter<double>("min_score", 5);
-        this->get_parameter("min_score", m_min_score);
+		this->declare_parameter<double>("min_score", 0.2);
+		this->get_parameter("min_score", m_min_score);
 
-        this->declare_parameter<double>("solver_gain", 5);
-        this->get_parameter("solver_gain", m_solver.gain);
+		this->declare_parameter<double>("solver_gain", 0.1);
+		this->get_parameter("solver_gain", m_solver.gain);
 
-        this->declare_parameter<double>("solver_damping", 5);
-        this->get_parameter("solver_damping", m_solver.damping);
+		this->declare_parameter<double>("solver_damping", 1000);
+		this->get_parameter("solver_damping", m_solver.damping);
 
-        this->declare_parameter<double>("update_gain", 5);
-        this->get_parameter("update_gain", m_update_gain);
+		this->declare_parameter<double>("update_gain", 0.5);
+		this->get_parameter("update_gain", m_update_gain);
 
-        this->declare_parameter<double>("confidence_gain", 5);
-        this->get_parameter("confidence_gain", m_confidence_gain);
+		this->declare_parameter<double>("confidence_gain", 0.01);
+		this->get_parameter("confidence_gain", m_confidence_gain);
 
-        this->declare_parameter<double>("odometry_std_xy", 5);
-        this->get_parameter("odometry_std_xy", m_odometry_std_xy);
+		this->declare_parameter<double>("odometry_std_xy", 0.01);
+		this->get_parameter("odometry_std_xy", m_odometry_std_xy);
 
-        this->declare_parameter<double>("odometry_std_yaw", 5);
-        this->get_parameter("odometry_std_yaw", m_odometry_std_yaw);
+		this->declare_parameter<double>("odometry_std_yaw", 0.01);
+		this->get_parameter("odometry_std_yaw", m_odometry_std_yaw);
 
-        this->declare_parameter<double>("min_sample_std_xy", 5);
-        this->get_parameter("min_sample_std_xy", m_min_sample_std_xy);
+		this->declare_parameter<double>("min_sample_std_xy", 0.025);
+		this->get_parameter("min_sample_std_xy", m_min_sample_std_xy);
 
-        this->declare_parameter<double>("min_sample_std_yaw", 5);
-        this->get_parameter("min_sample_std_yaw", m_min_sample_std_yaw);
+		this->declare_parameter<double>("min_sample_std_yaw", 0.025);
+		this->get_parameter("min_sample_std_yaw", m_min_sample_std_yaw);
 
-        this->declare_parameter<double>("max_sample_std_xy", 5);
-        this->get_parameter("max_sample_std_xy", m_max_sample_std_xy);
+		this->declare_parameter<double>("max_sample_std_xy", 0.5);
+		this->get_parameter("max_sample_std_xy", m_max_sample_std_xy);
 
-        this->declare_parameter<double>("constrain_threshold", 5);
-        this->get_parameter("constrain_threshold", m_constrain_threshold);
+		this->declare_parameter<double>("constrain_threshold", 0.1);
+		this->get_parameter("constrain_threshold", m_constrain_threshold);
 
-        this->declare_parameter<double>("constrain_threshold_yaw", 5);
-        this->get_parameter("constrain_threshold_yaw", m_constrain_threshold_yaw);
+		this->declare_parameter<double>("constrain_threshold_yaw", 0.2);
+		this->get_parameter("constrain_threshold_yaw", m_constrain_threshold_yaw);
 
-        this->declare_parameter<double>("transform_timeout", 5);
-        this->get_parameter("transform_timeout", m_transform_timeout);
+		this->declare_parameter<double>("transform_timeout", 0.2);
+		this->get_parameter("transform_timeout", m_transform_timeout);
 
 		m_map_update_thread = std::thread(&NeoLocalizationNode::update_loop, this);
 
@@ -145,10 +145,10 @@ public:
 		m_pub_pose_array = this->create_publisher<geometry_msgs::msg::PoseArray>("/particlecloud", 10);
 
 		m_loc_update_timer = create_wall_timer(
-      							100ms, std::bind(&NeoLocalizationNode::loc_update, this));
+								std::chrono::milliseconds(m_loc_update_time_ms), std::bind(&NeoLocalizationNode::loc_update, this));
 
 
-	 	buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+		buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
 
 		transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*buffer);
 	}
@@ -236,10 +236,10 @@ protected:
 		tf2::Stamped<tf2::Transform> base_to_odom;
 
 		try {
-			auto tempTransform = buffer->lookupTransform("odom", m_base_frame, tf2::TimePointZero);
+			auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
 			tf2::fromMsg(tempTransform, base_to_odom);
 		} catch(const std::exception& ex) {
-			RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookup 23Transform(m_base_frame, m_odom_frame) failed: " << ex.what());
+			RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookup Transform(m_base_frame, m_odom_frame) failed: " << ex.what());
 			return;
 		}
 		
@@ -537,8 +537,6 @@ protected:
 	 */
 	void update_map()
 	{
-		RCLCPP_INFO_STREAM(this->get_logger(),"Map updates");
-
 		Matrix<double, 4, 4> world_to_map;			// transformation from original grid map (integer coords) to "map frame"
 		Matrix<double, 3, 1> world_pose;			// pose in the original (integer coords) grid map (not map tile)
 		nav_msgs::msg::OccupancyGrid::SharedPtr world;
@@ -553,7 +551,7 @@ protected:
 				auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
 				tf2::fromMsg(tempTransform, base_to_odom);
 			} catch(const std::exception& ex) {
-				// RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
+				RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
 				return;
 			}
 
@@ -658,6 +656,7 @@ protected:
 			// compose and publish transform for tf package
 			geometry_msgs::msg::TransformStamped pose;
 			// compose header
+			// Adding an expiry time of the frame. Same procedure followed in nav2_amcl
 			m_offset_time.nanosec = m_offset_time.nanosec + 100000000;
 			pose.header.stamp = m_offset_time;
 			pose.header.frame_id = m_map_frame;
@@ -678,14 +677,14 @@ protected:
 private:
 	std::mutex m_node_mutex;
 
-    rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr m_pub_map_tile;
-    rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose;
-    rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose_2;
-    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr m_pub_pose_array;
+	rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr m_pub_map_tile;
+	rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose;
+	rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose_2;
+	rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr m_pub_pose_array;
 
-    rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_sub_map_topic;
-    rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_sub_scan_topic;
-    rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_sub_pose_estimate;
+	rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_sub_map_topic;
+	rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_sub_scan_topic;
+	rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_sub_pose_estimate;
 	std::shared_ptr<tf2_ros::TransformBroadcaster> m_tf_broadcaster;
 
 	bool m_broadcast_tf = false;
@@ -711,7 +710,7 @@ private:
 	double m_max_sample_std_yaw = 0;
 	double m_constrain_threshold = 0;
 	double m_constrain_threshold_yaw = 0;
-	double m_loc_update_rate = 0;
+	int m_loc_update_time_ms = 0;
 	double m_map_update_rate = 0;
 	double m_transform_timeout = 0;
 
@@ -746,12 +745,10 @@ int main(int argc, char** argv)
 {
 	// // initialize ROS
 	rclcpp::init(argc, argv);
-    
+	
 	try {
 		auto nh = std::make_shared<NeoLocalizationNode>() ;
-	    // rclcpp::executors::MultiThreadedExecutor executor {rclcpp::ExecutorOptions(), 2, true};
-    	// executor.add_node(nh);
- 		rclcpp::spin(nh);
+		rclcpp::spin(nh);
 	}
 	catch(const std::exception& ex) {
 		std::cout<<"NeoLocalizationNode: " << ex.what() << std::endl;
