@@ -54,101 +54,123 @@ public:
 	NeoLocalizationNode(): Node("neo_localization_node")
 	{
 		this->declare_parameter<bool>("broadcast_tf", true);
-        this->get_parameter_or("broadcast_tf", m_broadcast_tf, true);
+		this->get_parameter_or("broadcast_tf", m_broadcast_tf, true);
 
-        this->declare_parameter<std::string>("base_frame", "base_link");
-        this->get_parameter("base_frame", m_base_frame);
+		this->declare_parameter<std::string>("base_frame", "base_link");
+		this->get_parameter("base_frame", m_base_frame);
 
-        this->declare_parameter<std::string>("odom_frame", "odom");
-        this->get_parameter("odom_frame", m_odom_frame);
+		this->declare_parameter<std::string>("odom_frame", "odom");
+		this->get_parameter("odom_frame", m_odom_frame);
 
-        this->declare_parameter<std::string>("map_frame", "map");
-        this->get_parameter("map_frame", m_map_frame);
+		this->declare_parameter<std::string>("map_frame", "map");
+		this->get_parameter("map_frame", m_map_frame);
 
-        this->declare_parameter<int>("map_size", 1000);
-        this->get_parameter("map_size", m_map_size);
+		this->declare_parameter<int>("map_size", 1000);
+		this->get_parameter("map_size", m_map_size);
 
-        this->declare_parameter<int>("map_downscale", 0);
-        this->get_parameter("map_downscale", m_map_downscale);
+		this->declare_parameter<int>("map_downscale", 0);
+		this->get_parameter("map_downscale", m_map_downscale);
 
-        this->declare_parameter<int>("num_smooth", 5);
-        this->get_parameter("num_smooth", m_num_smooth);
+		this->declare_parameter<int>("num_smooth", 5);
+		this->get_parameter("num_smooth", m_num_smooth);
 
-        this->declare_parameter<int>("sample_rate", 5);
-        this->get_parameter("sample_rate", m_sample_rate);
+		this->declare_parameter<int>("sample_rate", 5);
+		this->get_parameter("sample_rate", m_sample_rate);
 
-        this->declare_parameter<int>("solver_iterations", 5);
-        this->get_parameter("solver_iterations", m_solver_iterations);
+		this->declare_parameter<int>("solver_iterations", 5);
+		this->get_parameter("solver_iterations", m_solver_iterations);
 
-        this->declare_parameter<int>("min_points", 5);
-        this->get_parameter("min_points", m_min_points);
+		this->declare_parameter<int>("min_points", 5);
+		this->get_parameter("min_points", m_min_points);
 
-        this->declare_parameter<double>("map_update_rate", 5);
-        this->get_parameter("map_update_rate", m_map_update_rate);
+		this->declare_parameter<double>("map_update_rate", 0.5);
+		this->get_parameter("map_update_rate", m_map_update_rate);
 
-        this->declare_parameter<double>("loc_update_rate", 5);
-        this->get_parameter("loc_update_rate", m_loc_update_rate);
+		this->declare_parameter<int>("loc_update_time", 100.);
+		this->get_parameter("loc_update_time", m_loc_update_time_ms);
 
-        this->declare_parameter<double>("min_score", 5);
-        this->get_parameter("min_score", m_min_score);
+		this->declare_parameter<double>("min_score", 0.2);
+		this->get_parameter("min_score", m_min_score);
 
-        this->declare_parameter<double>("solver_gain", 5);
-        this->get_parameter("solver_gain", m_solver.gain);
+		this->declare_parameter<double>("solver_gain", 0.1);
+		this->get_parameter("solver_gain", m_solver.gain);
 
-        this->declare_parameter<double>("solver_damping", 5);
-        this->get_parameter("solver_damping", m_solver.damping);
+		this->declare_parameter<double>("solver_damping", 1000);
+		this->get_parameter("solver_damping", m_solver.damping);
 
-        this->declare_parameter<double>("update_gain", 5);
-        this->get_parameter("update_gain", m_update_gain);
+		this->declare_parameter<double>("update_gain", 0.5);
+		this->get_parameter("update_gain", m_update_gain);
 
-        this->declare_parameter<double>("confidence_gain", 5);
-        this->get_parameter("confidence_gain", m_confidence_gain);
+		this->declare_parameter<double>("confidence_gain", 0.01);
+		this->get_parameter("confidence_gain", m_confidence_gain);
 
-        this->declare_parameter<double>("odometry_std_xy", 5);
-        this->get_parameter("odometry_std_xy", m_odometry_std_xy);
+		this->declare_parameter<double>("odometry_std_xy", 0.01);
+		this->get_parameter("odometry_std_xy", m_odometry_std_xy);
 
-        this->declare_parameter<double>("odometry_std_yaw", 5);
-        this->get_parameter("odometry_std_yaw", m_odometry_std_yaw);
+		this->declare_parameter<double>("odometry_std_yaw", 0.01);
+		this->get_parameter("odometry_std_yaw", m_odometry_std_yaw);
 
-        this->declare_parameter<double>("min_sample_std_xy", 5);
-        this->get_parameter("min_sample_std_xy", m_min_sample_std_xy);
+		this->declare_parameter<double>("min_sample_std_xy", 0.025);
+		this->get_parameter("min_sample_std_xy", m_min_sample_std_xy);
 
-        this->declare_parameter<double>("min_sample_std_yaw", 5);
-        this->get_parameter("min_sample_std_yaw", m_min_sample_std_yaw);
+		this->declare_parameter<double>("min_sample_std_yaw", 0.025);
+		this->get_parameter("min_sample_std_yaw", m_min_sample_std_yaw);
 
-        this->declare_parameter<double>("max_sample_std_xy", 5);
-        this->get_parameter("max_sample_std_xy", m_max_sample_std_xy);
+		this->declare_parameter<double>("max_sample_std_xy", 0.5);
+		this->get_parameter("max_sample_std_xy", m_max_sample_std_xy);
 
-        this->declare_parameter<double>("constrain_threshold", 5);
-        this->get_parameter("constrain_threshold", m_constrain_threshold);
+		this->declare_parameter<double>("constrain_threshold", 0.1);
+		this->get_parameter("constrain_threshold", m_constrain_threshold);
 
-        this->declare_parameter<double>("constrain_threshold_yaw", 5);
-        this->get_parameter("constrain_threshold_yaw", m_constrain_threshold_yaw);
+		this->declare_parameter<double>("constrain_threshold_yaw", 0.2);
+		this->get_parameter("constrain_threshold_yaw", m_constrain_threshold_yaw);
 
-        this->declare_parameter<double>("transform_timeout", 5);
-        this->get_parameter("transform_timeout", m_transform_timeout);
+		this->declare_parameter<double>("transform_timeout", 0.2);
+		this->get_parameter("transform_timeout", m_transform_timeout);
+
+		this->declare_parameter<std::string>("scan_topic", "scan");
+		this->get_parameter("scan_topic", m_scan_topic);
+
+		this->declare_parameter<std::string>("initialpose", "initialpose");
+		this->get_parameter("initialpose", m_initial_pose);
+
+		this->declare_parameter<std::string>("map_tile", "map_tile");
+		this->get_parameter("map_tile", m_map_tile);
+
+		this->declare_parameter<std::string>("map_pose", "map_pose");
+		this->get_parameter("map_pose", m_map_pose);
+
+		this->declare_parameter<std::string>("particle_cloud", "particlecloud");
+		this->get_parameter("particle_cloud", m_particle_cloud);
+
+		this->declare_parameter<std::string>("amcl_pose", "amcl_pose");
+		this->get_parameter("amcl_pose", m_amcl_pose);
+
+		m_map_update_thread = std::thread(&NeoLocalizationNode::update_loop, this);
 
 		m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
 
-		m_sub_scan_topic = this->create_subscription<sensor_msgs::msg::LaserScan>("/scan", 1, std::bind(&NeoLocalizationNode::scan_callback, this, _1));
-		m_sub_map_topic = this->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", 1, std::bind(&NeoLocalizationNode::map_callback, this, _1));
-		m_sub_pose_estimate = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("/initialpose", 1, std::bind(&NeoLocalizationNode::pose_callback, this, _1));
+		m_sub_scan_topic = this->create_subscription<sensor_msgs::msg::LaserScan>(m_scan_topic, rclcpp::SensorDataQoS(), std::bind(&NeoLocalizationNode::scan_callback, this, _1));
+		m_sub_map_topic = this->create_subscription<nav_msgs::msg::OccupancyGrid>(m_map_frame, rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(), std::bind(&NeoLocalizationNode::map_callback, this, _1));
+		m_sub_pose_estimate = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(m_initial_pose, 1, std::bind(&NeoLocalizationNode::pose_callback, this, _1));
 
-		m_pub_map_tile = this->create_publisher<nav_msgs::msg::OccupancyGrid>("/map_tile", 1);
-		m_pub_loc_pose = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/amcl_pose", 10);
-		m_pub_loc_pose_2 = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/map_pose", 10);
-		m_pub_pose_array = this->create_publisher<geometry_msgs::msg::PoseArray>("/particlecloud", 10);
+		m_pub_map_tile = this->create_publisher<nav_msgs::msg::OccupancyGrid>(m_map_tile, 1);
+		m_pub_loc_pose = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(m_amcl_pose, 10);
+		m_pub_loc_pose_2 = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(m_map_pose, 10);
+		m_pub_pose_array = this->create_publisher<geometry_msgs::msg::PoseArray>(m_particle_cloud, 10);
 
 		m_loc_update_timer = create_wall_timer(
-      							500ms, std::bind(&NeoLocalizationNode::loc_update, this));
+								std::chrono::milliseconds(m_loc_update_time_ms), std::bind(&NeoLocalizationNode::loc_update, this));
 
-		m_map_update_thread = std::thread(&NeoLocalizationNode::update_loop, this);
+
+		buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+
+		transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*buffer);
 	}
 
 	~NeoLocalizationNode()
 	{
 		if(m_map_update_thread.joinable()) {
-			m_map_update_thread.join();
 		}
 	}
 
@@ -159,11 +181,14 @@ protected:
 	 */
 	void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 	{
+
 		std::lock_guard<std::mutex> lock(m_node_mutex);
 
-		if(!m_map) {
+		if(!map_received_) {
+			RCLCPP_INFO_ONCE(this->get_logger(), "no map");
 			return;
 		}
+		RCLCPP_INFO_ONCE(this->get_logger(), "map_received");
 		m_scan_buffer[scan->header.frame_id] = scan;
 	}
 
@@ -175,22 +200,23 @@ protected:
 		std::vector<scan_point_t> points;
 		tf2::Stamped<tf2::Transform> base_to_odom;
 		tf2::Stamped<tf2::Transform> sensor_to_base;
+		bool callback_timeout = false;
 		try {
 			auto tempTransform = buffer->lookupTransform(m_base_frame, scan->header.frame_id, tf2::TimePointZero);
 			tf2::fromMsg(tempTransform, sensor_to_base);
+
 		} catch(const std::exception& ex) {
-			// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(scan->header.frame_id, m_base_frame) failed: " << ex.what());
+			RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookupTransform(scan->header.frame_id, m_base_frame) failed: " << ex.what());
 			return points;
 		}
 		try {
-			// buffer->waitForTransform(m_odom_frame, m_base_frame, scan->header.stamp, ros::Duration(m_transform_timeout));
-			auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
+			auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, scan->header.stamp);
 			tf2::fromMsg(tempTransform, base_to_odom);
 			} catch(const std::exception& ex) {
-			// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
+			RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
 			return points;
 		}
-
+		
 		const Matrix<double, 4, 4> S = convert_transform_3(sensor_to_base);
 		const Matrix<double, 4, 4> L = convert_transform_25(base_to_odom);
 
@@ -218,21 +244,23 @@ protected:
 	void loc_update()
 	{
 		std::lock_guard<std::mutex> lock(m_node_mutex);
-
-		if(!m_map || m_scan_buffer.empty()) {
+		if(!map_received_ || m_scan_buffer.empty() || !m_initialized) {
 			return;
 		}
+
 		tf2::Stamped<tf2::Transform> base_to_odom;
 
 		try {
 			auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
 			tf2::fromMsg(tempTransform, base_to_odom);
 		} catch(const std::exception& ex) {
-			// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
+			RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookup Transform(m_base_frame, m_odom_frame) failed: " << ex.what());
 			return;
 		}
-
-		const Matrix<double, 4, 4> L = convert_transform_25(base_to_odom);
+		
+		tf2::Transform base_to_odom_ws(base_to_odom.getRotation(), base_to_odom.getOrigin());
+		
+		const Matrix<double, 4, 4> L = convert_transform_25(base_to_odom_ws);
 		const Matrix<double, 4, 4> T = translate25(m_offset_x, m_offset_y) * rotate25_z(m_offset_yaw);		// odom to map
 
 		const Matrix<double, 3, 1> odom_pose = (L * Matrix<double, 4, 1>{0, 0, 0, 1}).project();
@@ -241,17 +269,20 @@ protected:
 
 		std::vector<scan_point_t> points;
 
+		RCLCPP_INFO_ONCE(this->get_logger(), "map_received");
 		// convert all scans to current base frame
 		for(const auto& scan : m_scan_buffer)
 		{
+			
 			auto scan_points = convert_scan(scan.second, L.inverse());
+
 			points.insert(points.end(), scan_points.begin(), scan_points.end());
 		}
 
-		// check for number of points
+		// // check for number of points
 		if(points.size() < m_min_points)
 		{
-			// ROS_WARN_STREAM("NeoLocalizationNode: Number of points too low: " << points.size());
+			RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: Number of points too low: " << points.size());
 			return;
 		}
 
@@ -260,8 +291,8 @@ protected:
 		pose_array.header.frame_id = m_map_frame;
 
 		// calc predicted grid pose based on odometry
-		const Matrix<double, 3, 1> grid_pose = (m_grid_to_map.inverse() * T * L * Matrix<double, 4, 1>{0, 0, 0, 1}).project();
 
+		const Matrix<double, 3, 1> grid_pose = (m_grid_to_map.inverse() * T * L * Matrix<double, 4, 1>{0, 0, 0, 1}).project();
 		// setup distributions
 		std::normal_distribution<double> dist_x(grid_pose[0], m_sample_std_xy);
 		std::normal_distribution<double> dist_y(grid_pose[1], m_sample_std_xy);
@@ -435,9 +466,9 @@ protected:
 		m_last_odom_pose = odom_pose;
 
 		if(update_counter++ % 10 == 0) {
-			// ROS_INFO_STREAM("NeoLocalizationNode: score=" << float(best_score) << ", grad_uvw=[" << float(grad_std_uvw[0]) << ", " << float(grad_std_uvw[1])
-					// << ", " << float(grad_std_uvw[2]) << "], std_xy=" << float(m_sample_std_xy) << " m, std_yaw=" << float(m_sample_std_yaw)
-					// << " rad, mode=" << mode << "D, " << m_scan_buffer.size() << " scans");
+			RCLCPP_INFO_STREAM(this->get_logger(), 	"NeoLocalizationNode: score=" << float(best_score) << ", grad_uvw=[" << float(grad_std_uvw[0]) << ", " << float(grad_std_uvw[1])
+					<< ", " << float(grad_std_uvw[2]) << "], std_xy=" << float(m_sample_std_xy) << " m, std_yaw=" << float(m_sample_std_yaw)
+					<< " rad, mode=" << mode << "D, " << m_scan_buffer.size() << " scans");
 		}
 
 		// clear scan buffer
@@ -453,22 +484,22 @@ protected:
 			std::lock_guard<std::mutex> lock(m_node_mutex);
 
 			if(pose->header.frame_id != m_map_frame) {
-				// ROS_WARN_STREAM("NeoLocalizationNode: Invalid pose estimate frame: " << pose->header.frame_id);
+				RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: Invalid pose estimate frame");
 				return;
 			}
 
-
-			// ROS_INFO_STREAM("NeoLocalizationNode: Got new map pose estimate: x=" << map_pose.getOrigin()[0]
-							// << " m, y=" <<  map_pose.getOrigin()[1] << " m, yaw=" << tf::getYaw(map_pose.getRotation()) << " rad");
 			tf2::Stamped<tf2::Transform> base_to_odom;
 			tf2::Transform map_pose;
 			tf2::fromMsg(pose->pose.pose, map_pose);
+
+			RCLCPP_INFO_STREAM(this->get_logger(), "NeoLocalizationNode: Got new map pose estimate: x=" << map_pose.getOrigin()[0]
+							<< " m, y=" <<  map_pose.getOrigin()[1]	);
 
 			try {
 				auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
 				tf2::convert(tempTransform, base_to_odom);
 			} catch(const std::exception& ex) {
-				// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
+				RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: "<< ex.what());
 				return;
 			}
 
@@ -500,9 +531,10 @@ protected:
 	void map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr ros_map)
 	{
 		std::lock_guard<std::mutex> lock(m_node_mutex);
+		map_received_ = true;
 
-		// ROS_INFO_STREAM("NeoLocalizationNode: Got new map with dimensions " << ros_map->info.width << " x " << ros_map->info.height
-				// << " and cell size " << ros_map->info.resolution);
+		RCLCPP_INFO_STREAM(this->get_logger(), "NeoLocalizationNode: Got new map with dimensions " << ros_map->info.width << " x " << ros_map->info.height
+				<< " and cell size " << ros_map->info.resolution);
 
 		{
 			tf2::Transform tmp;
@@ -510,7 +542,6 @@ protected:
 			m_world_to_map = convert_transform_25(tmp);
 		}
 		m_world = ros_map;
-
 		// reset particle spread to maximum
 		m_sample_std_xy = m_max_sample_std_xy;
 		m_sample_std_yaw = m_max_sample_std_yaw;
@@ -535,7 +566,7 @@ protected:
 				auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, tf2::TimePointZero);
 				tf2::fromMsg(tempTransform, base_to_odom);
 			} catch(const std::exception& ex) {
-				// ROS_WARN_STREAM("NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
+				RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
 				return;
 			}
 
@@ -583,6 +614,7 @@ protected:
 			std::lock_guard<std::mutex> lock(m_node_mutex);
 			m_map = map;
 			m_grid_to_map = world_to_map * translate25<double>(tile_x * world_scale, tile_y * world_scale);
+			m_initialized = true;
 		}
 
 		const auto tile_origin = (m_grid_to_map * Matrix<double, 4, 1>{0, 0, 0, 1}).project();
@@ -608,8 +640,6 @@ protected:
 		}
 		m_pub_map_tile->publish(ros_grid);
 
-		// ROS_DEBUG_STREAM("NeoLocalizationNode: Got new grid at offset (" << tile_x << ", " << tile_y << ") [iworld], "
-				// "center = (" << tile_center[0] << ", " << tile_center[1] << ") [map]");
 	}
 
 	/*
@@ -617,15 +647,17 @@ protected:
 	 */
 	void update_loop()
 	{
+		RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: update_map() failed:");
+
 		rclcpp::Rate loop_rate(m_map_update_rate);
 		while(rclcpp::ok()) {
 			try {
 				update_map();	// get a new map tile periodically
 			}
 			catch(const std::exception& ex) {
-				// ROS_WARN_STREAM("NeoLocalizationNode: update_map() failed: " << ex.what());
+				RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: update_map() failed:");
 			}
-			loop_rate.sleep();
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 	}
 
@@ -639,6 +671,8 @@ protected:
 			// compose and publish transform for tf package
 			geometry_msgs::msg::TransformStamped pose;
 			// compose header
+			// Adding an expiry time of the frame. Same procedure followed in nav2_amcl
+			m_offset_time.nanosec = m_offset_time.nanosec + 100000000;
 			pose.header.stamp = m_offset_time;
 			pose.header.frame_id = m_map_frame;
 			pose.child_frame_id = m_odom_frame;
@@ -658,20 +692,27 @@ protected:
 private:
 	std::mutex m_node_mutex;
 
-    rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr m_pub_map_tile;
-    rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose;
-    rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose_2;
-    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr m_pub_pose_array;
+	rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr m_pub_map_tile;
+	rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose;
+	rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose_2;
+	rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr m_pub_pose_array;
 
-    rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_sub_map_topic;
-    rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_sub_scan_topic;
-    rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_sub_pose_estimate;
+	rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_sub_map_topic;
+	rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_sub_scan_topic;
+	rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_sub_pose_estimate;
 	std::shared_ptr<tf2_ros::TransformBroadcaster> m_tf_broadcaster;
 
 	bool m_broadcast_tf = false;
+	bool m_initialized = false;
 	std::string m_base_frame;
 	std::string m_odom_frame;
 	std::string m_map_frame;
+	std::string m_scan_topic;
+	std::string m_initial_pose;
+	std::string m_map_tile;
+	std::string m_map_pose;
+	std::string m_particle_cloud;
+	std::string m_amcl_pose;
 
 	int m_map_size = 0;
 	int m_map_downscale = 0;
@@ -690,7 +731,7 @@ private:
 	double m_max_sample_std_yaw = 0;
 	double m_constrain_threshold = 0;
 	double m_constrain_threshold_yaw = 0;
-	double m_loc_update_rate = 0;
+	int m_loc_update_time_ms = 0;
 	double m_map_update_rate = 0;
 	double m_transform_timeout = 0;
 
@@ -700,13 +741,15 @@ private:
 	double m_offset_yaw = 0;				// current yaw offset between odom and map
 	double m_sample_std_xy = 0;				// current sample spread in xy
 	double m_sample_std_yaw = 0;			// current sample spread in yaw
-	std::unique_ptr<tf2_ros::Buffer> buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+	std::unique_ptr<tf2_ros::Buffer> buffer;
+	std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
 
 	Matrix<double, 3, 1> m_last_odom_pose;
 	Matrix<double, 4, 4> m_grid_to_map;
 	Matrix<double, 4, 4> m_world_to_map;
 	std::shared_ptr<GridMap<float>> m_map;			// map tile
 	nav_msgs::msg::OccupancyGrid::SharedPtr m_world;		// whole map
+	bool map_received_ = false;
 
 	int64_t update_counter = 0;
 	std::map<std::string, sensor_msgs::msg::LaserScan::SharedPtr> m_scan_buffer;
@@ -723,10 +766,9 @@ int main(int argc, char** argv)
 {
 	// // initialize ROS
 	rclcpp::init(argc, argv);
-    
+	
 	try {
-		auto nh = std::make_shared<NeoLocalizationNode>();
-
+		auto nh = std::make_shared<NeoLocalizationNode>() ;
 		rclcpp::spin(nh);
 	}
 	catch(const std::exception& ex) {
@@ -736,4 +778,5 @@ int main(int argc, char** argv)
 
 	return 0;
 }
+
 
