@@ -122,6 +122,9 @@ public:
 		this->declare_parameter<double>("max_sample_std_xy", 0.5);
 		this->get_parameter("max_sample_std_xy", m_max_sample_std_xy);
 
+		this->declare_parameter<double>("max_sample_std_yaw", 0.5);
+		this->get_parameter("max_sample_std_yaw", m_max_sample_std_yaw);
+
 		this->declare_parameter<double>("constrain_threshold", 0.1);
 		this->get_parameter("constrain_threshold", m_constrain_threshold);
 
@@ -660,7 +663,7 @@ protected:
 			catch(const std::exception& ex) {
 				RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: update_map() failed:");
 			}
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			loop_rate.sleep();
 		}
 	}
 
