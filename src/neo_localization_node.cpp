@@ -65,6 +65,9 @@ public:
 		this->declare_parameter<std::string>("map_frame", "map");
 		this->get_parameter("map_frame", m_map_frame);
 
+		this->declare_parameter<std::string>("map_topic", "map");
+		this->get_parameter("map_topic", m_map_topic);
+
 		this->declare_parameter<int>("map_size", 1000);
 		this->get_parameter("map_size", m_map_size);
 
@@ -134,6 +137,9 @@ public:
 		this->declare_parameter<std::string>("scan_topic", "scan");
 		this->get_parameter("scan_topic", m_scan_topic);
 
+		this->declare_parameter<std::string>("namespace", "");
+		this->get_parameter("namespace", m_ns);
+
 		this->declare_parameter<std::string>("initialpose", "initialpose");
 		this->get_parameter("initialpose", m_initial_pose);
 
@@ -154,7 +160,7 @@ public:
 		m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
 
 		m_sub_scan_topic = this->create_subscription<sensor_msgs::msg::LaserScan>(m_scan_topic, rclcpp::SensorDataQoS(), std::bind(&NeoLocalizationNode::scan_callback, this, _1));
-		m_sub_map_topic = this->create_subscription<nav_msgs::msg::OccupancyGrid>(m_map_frame, rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(), std::bind(&NeoLocalizationNode::map_callback, this, _1));
+		m_sub_map_topic = this->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(), std::bind(&NeoLocalizationNode::map_callback, this, _1));
 		m_sub_pose_estimate = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(m_initial_pose, 1, std::bind(&NeoLocalizationNode::pose_callback, this, _1));
 
 		m_pub_map_tile = this->create_publisher<nav_msgs::msg::OccupancyGrid>(m_map_tile, 1);
@@ -192,6 +198,7 @@ protected:
 			return;
 		}
 		RCLCPP_INFO_ONCE(this->get_logger(), "map_received");
+		scan->header.frame_id = m_ns + scan->header.frame_id;
 		m_scan_buffer[scan->header.frame_id] = scan;
 	}
 
@@ -675,7 +682,7 @@ protected:
 			geometry_msgs::msg::TransformStamped pose;
 			// compose header
 			// Adding an expiry time of the frame. Same procedure followed in nav2_amcl
-			m_offset_time.nanosec = m_offset_time.nanosec + 100000000;
+			m_offset_time.nanosec = m_offset_time.nanosec + 1000000000;
 			pose.header.stamp = m_offset_time;
 			pose.header.frame_id = m_map_frame;
 			pose.child_frame_id = m_odom_frame;
@@ -710,12 +717,15 @@ private:
 	std::string m_base_frame;
 	std::string m_odom_frame;
 	std::string m_map_frame;
+	std::string m_map_topic;
 	std::string m_scan_topic;
 	std::string m_initial_pose;
 	std::string m_map_tile;
 	std::string m_map_pose;
 	std::string m_particle_cloud;
 	std::string m_amcl_pose;
+	std::string m_ns = "";
+
 
 	int m_map_size = 0;
 	int m_map_downscale = 0;
