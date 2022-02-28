@@ -137,9 +137,6 @@ public:
 		this->declare_parameter<std::string>("scan_topic", "scan");
 		this->get_parameter("scan_topic", m_scan_topic);
 
-		this->declare_parameter<std::string>("namespace", "");
-		this->get_parameter("namespace", m_ns);
-
 		this->declare_parameter<std::string>("initialpose", "initialpose");
 		this->get_parameter("initialpose", m_initial_pose);
 
@@ -175,6 +172,15 @@ public:
 		buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
 
 		transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*buffer);
+
+		std::string robot_namespace(this->get_namespace());
+
+		// removing the unnecessary "/" from the namespace
+		robot_namespace.erase(std::remove(robot_namespace.begin(), robot_namespace.end(), '/'), 
+		robot_namespace.end());
+
+		m_base_frame = robot_namespace + m_base_frame;
+		m_odom_frame = robot_namespace + m_odom_frame;
 	}
 
 	~NeoLocalizationNode()
