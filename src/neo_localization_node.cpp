@@ -161,6 +161,8 @@ public:
 		m_map_update_thread = std::thread(&NeoLocalizationNode::update_loop, this);
 
 		m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
+		m_base_frame = m_ns + m_base_frame;
+		m_odom_frame = m_ns + m_odom_frame;
 
 		m_sub_scan_topic = this->create_subscription<sensor_msgs::msg::LaserScan>(m_ns + m_scan_topic, rclcpp::SensorDataQoS(), std::bind(&NeoLocalizationNode::scan_callback, this, _1));
 		m_sub_map_topic = this->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(), std::bind(&NeoLocalizationNode::map_callback, this, _1));
