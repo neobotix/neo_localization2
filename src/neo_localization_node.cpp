@@ -140,9 +140,6 @@ public:
 		this->declare_parameter<std::string>("scan_topic", "scan");
 		this->get_parameter("scan_topic", m_scan_topic);
 
-		this->declare_parameter<std::string>("namespace", "");
-		this->get_parameter("namespace", m_ns);
-
 		this->declare_parameter<std::string>("initialpose", "initialpose");
 		this->get_parameter("initialpose", m_initial_pose);
 
@@ -161,17 +158,15 @@ public:
 		m_map_update_thread = std::thread(&NeoLocalizationNode::update_loop, this);
 
 		m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
-		m_base_frame = m_ns + m_base_frame;
-		m_odom_frame = m_ns + m_odom_frame;
 
-		m_sub_scan_topic = this->create_subscription<sensor_msgs::msg::LaserScan>(m_ns + m_scan_topic, rclcpp::SensorDataQoS(), std::bind(&NeoLocalizationNode::scan_callback, this, _1));
+		m_sub_scan_topic = this->create_subscription<sensor_msgs::msg::LaserScan>(this->get_namespace() + m_scan_topic, rclcpp::SensorDataQoS(), std::bind(&NeoLocalizationNode::scan_callback, this, _1));
 		m_sub_map_topic = this->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(), std::bind(&NeoLocalizationNode::map_callback, this, _1));
-		m_sub_pose_estimate = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(m_ns + m_initial_pose, 1, std::bind(&NeoLocalizationNode::pose_callback, this, _1));
+		m_sub_pose_estimate = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(this->get_namespace() + m_initial_pose, 1, std::bind(&NeoLocalizationNode::pose_callback, this, _1));
 
-		m_pub_map_tile = this->create_publisher<nav_msgs::msg::OccupancyGrid>(m_ns + m_map_tile, 1);
-		m_pub_loc_pose = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(m_ns + m_amcl_pose, 10);
-		m_pub_loc_pose_2 = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(m_ns + m_map_pose, 10);
-		m_pub_pose_array = this->create_publisher<geometry_msgs::msg::PoseArray>(m_ns + m_particle_cloud, 10);
+		m_pub_map_tile = this->create_publisher<nav_msgs::msg::OccupancyGrid>(this->get_namespace() + m_map_tile, 1);
+		m_pub_loc_pose = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(this->get_namespace() + m_amcl_pose, 10);
+		m_pub_loc_pose_2 = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(this->get_namespace() + m_map_pose, 10);
+		m_pub_pose_array = this->create_publisher<geometry_msgs::msg::PoseArray>(this->get_namespace() + m_particle_cloud, 10);
 
 		m_loc_update_timer = create_wall_timer(
 								std::chrono::milliseconds(m_loc_update_time_ms), std::bind(&NeoLocalizationNode::loc_update, this));
@@ -180,6 +175,15 @@ public:
 		buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
 
 		transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*buffer);
+
+		std::string robot_namespace(this->get_namespace());
+
+		// removing the unnecessary "/" from the namespace
+		robot_namespace.erase(std::remove(robot_namespace.begin(), robot_namespace.end(), '/'), 
+		robot_namespace.end());
+
+		m_base_frame = robot_namespace + m_base_frame;
+		m_odom_frame = robot_namespace + m_odom_frame;
 	}
 
 	~NeoLocalizationNode()
