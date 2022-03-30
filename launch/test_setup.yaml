@@ -1,8 +1,10 @@
-neo_localization:
+neo_localization2_node:
   ros__parameters:
     # exponential low pass gain for localization update (0 to 1)
     #   (higher gain means odometry is less used / relied on)
     update_gain: 0.5
+
+    odom_frame: odom
 
     # time based confidence gain when in 2D / 1D mode
     confidence_gain: 0.01
@@ -17,7 +19,7 @@ neo_localization:
     map_update_rate: 0.5
 
     # map tile size in pixels
-    map_size: 1000
+    map_size: 100000
 
     # how often to downscale (half) the original map
     map_downscale: 0
@@ -66,7 +68,7 @@ neo_localization:
     solver_gain: 0.1
 
     # solver update damping, higher damping = more stability / slower convergence
-    solver_damping: 1000
+    solver_damping: 1000.0
 
     # number of gauss-newton iterations per sample per scan
     solver_iterations: 20
