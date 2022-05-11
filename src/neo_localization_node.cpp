@@ -155,6 +155,9 @@ public:
 		this->declare_parameter<std::string>("amcl_pose", "amcl_pose");
 		this->get_parameter("amcl_pose", m_amcl_pose);
 
+    this->declare_parameter<bool>("broadcast_info", false);
+    this->get_parameter("broadcast_info", m_broadcast_info);
+
 		m_map_update_thread = std::thread(&NeoLocalizationNode::update_loop, this);
 
 		m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
@@ -484,11 +487,13 @@ protected:
 		// keep last odom pose
 		m_last_odom_pose = odom_pose;
 
-		if(update_counter++ % 10 == 0) {
-			RCLCPP_INFO_STREAM(this->get_logger(), 	"NeoLocalizationNode: score=" << float(best_score) << ", grad_uvw=[" << float(grad_std_uvw[0]) << ", " << float(grad_std_uvw[1])
-					<< ", " << float(grad_std_uvw[2]) << "], std_xy=" << float(m_sample_std_xy) << " m, std_yaw=" << float(m_sample_std_yaw)
-					<< " rad, mode=" << mode << "D, " << m_scan_buffer.size() << " scans");
-		}
+    if(m_broadcast_info == true) {
+      if(update_counter++ % 10 == 0) {
+      	RCLCPP_INFO_STREAM(this->get_logger(),  "NeoLocalizationNode: score=" << float(best_score) << ", grad_uvw=[" << float(grad_std_uvw[0]) << ", " << float(grad_std_uvw[1])
+          << ", " << float(grad_std_uvw[2]) << "], std_xy=" << float(m_sample_std_xy) << " m, std_yaw=" << float(m_sample_std_yaw)
+          << " rad, mode=" << mode << "D, " << m_scan_buffer.size() << " scans");
+      }
+    }
 
 		// clear scan buffer
 		m_scan_buffer.clear();
@@ -779,6 +784,7 @@ private:
 	Solver m_solver;
 	std::mt19937 m_generator;
 	std::thread m_map_update_thread;
+	bool m_broadcast_info;
 	rclcpp::TimerBase::SharedPtr m_loc_update_timer;
 
 };
