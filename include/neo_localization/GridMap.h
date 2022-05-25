@@ -144,15 +144,15 @@ public:
 	 */
 	float bilinear_lookup_ex(int x, int y, float a, float b) const
 	{
-		const int x0 = std::min(std::max(x, 0), m_size_x - 1);
-		const int x1 = std::min(x0 + 1, m_size_x - 1);
-		const int y0 = std::min(std::max(y, 0), m_size_y - 1);
-		const int y1 = std::min(y0 + 1, m_size_y - 1);
+		const int x0 = (x > 0 ? x:0) < m_size_x - 1 ? (x > 0 ? x:0): m_size_x - 1;
+		const int x1 = x0 + 1 < m_size_x - 1 ? x0 + 1: m_size_x - 1;
+		const int y0 = (y > 0 ? y:0) < m_size_y - 1 ? (y > 0 ? y:0): m_size_y - 1;
+		const int y1 = y0 + 1 < m_size_y - 1 ? y0 + 1: m_size_y - 1;
 
-		return		(*this)(x0, y0) * ((1.f - a) * (1.f - b))
-				+	(*this)(x1, y0) * (a * (1.f - b))
-				+	(*this)(x0, y1) * ((1.f - a) * b)
-				+	(*this)(x1, y1) * (a * b);
+		return		m_map[size_t(y0) * m_size_x + x0] * ((1.f - a) * (1.f - b))
+				+	m_map[size_t(y0) * m_size_x + x1] * (a * (1.f - b))
+				+	m_map[size_t(y1) * m_size_x + x0] * ((1.f - a) * b)
+				+	m_map[size_t(y1) * m_size_x + x1] * (a * b);
 	}
 
 	/*
@@ -172,10 +172,10 @@ public:
 	 */
 	void bilinear_summation_ex(int x, int y, float a, float b, const T& value)
 	{
-		const int x0 = std::min(std::max(x, 0), m_size_x - 1);
-		const int x1 = std::min(x0 + 1, m_size_x - 1);
-		const int y0 = std::min(std::max(y, 0), m_size_y - 1);
-		const int y1 = std::min(y0 + 1, m_size_y - 1);
+		const int x0 = (x > 0 ? x:0) < m_size_x - 1 ? (x > 0 ? x:0): m_size_x - 1;
+		const int x1 = x0 + 1 < m_size_x - 1 ? x0 + 1: m_size_x - 1;
+		const int y0 = (y > 0 ? y:0) < m_size_y - 1 ? (y > 0 ? y:0): m_size_y - 1;
+		const int y1 = y0 + 1 < m_size_y - 1 ? y0 + 1: m_size_y - 1;
 
 		(*this)(x0, y0) += value * ((1.f - a) * (1.f - b));
 		(*this)(x1, y0) += value * (a * (1.f - b));
