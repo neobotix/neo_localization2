@@ -21,7 +21,13 @@ find_package(nav2_util REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(neo_common2 REQUIRED)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release"
+      CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
+      FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
 
 include_directories(
   ${Boost_INCLUDE_DIRS}
