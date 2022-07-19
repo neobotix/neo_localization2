@@ -152,8 +152,8 @@ public:
 		this->declare_parameter<std::string>("amcl_pose", "amcl_pose");
 		this->get_parameter("amcl_pose", m_amcl_pose);
 
-    this->declare_parameter<bool>("broadcast_info", false);
-    this->get_parameter("broadcast_info", m_broadcast_info);
+    	this->declare_parameter<bool>("broadcast_info", false);
+    	this->get_parameter("broadcast_info", m_broadcast_info);
 
 		m_map_update_thread = std::thread(&NeoLocalizationNode::update_loop, this);
 
@@ -645,6 +645,8 @@ protected:
 		// publish new map tile for visualization
 		tf2::Quaternion myQuaternion;
 		nav_msgs::msg::OccupancyGrid ros_grid;
+		ros_grid.header.stamp = m_offset_time;
+		ros_grid.header.frame_id = m_map_frame;
 		ros_grid.info.resolution = map->scale();
 		ros_grid.info.width = map->size_x();
 		ros_grid.info.height = map->size_y();
