@@ -32,4 +32,13 @@ jobs:
         with:
           target-ros2-distro: rolling
           package-name: neo_common2
+          skip-tests: true
           vcs-repo-file-url: "${{ github.workspace }}/.github/workflows/ros_deps.repos"
+          colcon-defaults: |
+            {
+              "build": {
+               "cmake-args": [
+                "symlink-install": true
+              ]
+             }
+            }
