@@ -9,7 +9,7 @@
     <author>Max Wittal</author>
     <maintainer email="ros@neobotix.de">Neobotix GmbH</maintainer>
     <maintainer email="padmanabhan@neobotix.de">Pradheep Padmanabhan</maintainer>
-    <license>BSD</license>
+    <license>MIT</license>
     <url>https://github.com/neobotix/neo_localization2</url>
 
     <buildtool_depend>ament_cmake</buildtool_depend>
