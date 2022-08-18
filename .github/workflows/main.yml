@@ -31,7 +31,7 @@ jobs:
       - uses: ros-tooling/action-ros-ci@0.2.6
         with:
           target-ros2-distro: rolling
-          package-name: neo_common2
+          package-name: neo_localization2
           skip-tests: true
           vcs-repo-file-url: "${{ github.workspace }}/.github/workflows/ros_deps.repos"
           colcon-defaults: |
