@@ -76,7 +76,7 @@ Matrix<double, 4, 4> convert_transform_3(const tf2::Transform& trans)
  * Converts a grid map to a ROS occupancy map.
  */
 inline
-boost::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros( std::shared_ptr<GridMap<float>> map,
+std::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros( std::shared_ptr<GridMap<float>> map,
                         Matrix<double, 3, 1> origin,
                         rclcpp::Time m_tCurrentTimeStamp)
 {
@@ -103,7 +103,7 @@ boost::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros( std::shared_ptr<
  * Converts a grid map to a binary (-1, 0 or 100) ROS occupancy map.
  */
 inline
-boost::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros_binary(  std::shared_ptr<GridMap<float>> map,
+std::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros_binary(  std::shared_ptr<GridMap<float>> map,
                           Matrix<double, 3, 1> origin,
                           float threshold,
                           rclcpp::Time m_tCurrentTimeStamp)
