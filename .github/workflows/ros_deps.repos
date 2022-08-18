@@ -1,0 +1,7 @@
+#Dependencies of ros pacakges
+
+repositories:
+  neo_common2:
+    type: git
+    url: https://github.com/neobotix/neo_common2
+    version: master
