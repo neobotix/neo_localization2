@@ -80,7 +80,7 @@ std::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros( std::shared_ptr<Gr
                         Matrix<double, 3, 1> origin,
                         rclcpp::Time m_tCurrentTimeStamp)
 {
-  auto grid = boost::make_shared<nav_msgs::msg::OccupancyGrid>();
+  auto grid = std::make_shared<nav_msgs::msg::OccupancyGrid>();
   tf2::Quaternion q;
   grid->header.stamp = m_tCurrentTimeStamp;
   grid->info.resolution = map->scale();
@@ -116,7 +116,7 @@ std::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros_binary(  std::share
       {0.00118231, 0.01357, 0.0276652, 0.01357, 0.00118231},
   };
 
-  auto grid = boost::make_shared<nav_msgs::msg::OccupancyGrid>();
+  auto grid = std::make_shared<nav_msgs::msg::OccupancyGrid>();
   grid->header.stamp = m_tCurrentTimeStamp;
   grid->info.resolution = map->scale();
   grid->info.width = map->size_x();
