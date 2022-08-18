@@ -26,8 +26,6 @@ SOFTWARE.
 #define INCLUDE_NEO_LOCALIZATION_CONVERT_H_
 
 #include <neo_localization/GridMap.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp> 
 #include <tf2/transform_datatypes.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -78,11 +76,11 @@ Matrix<double, 4, 4> convert_transform_3(const tf2::Transform& trans)
  * Converts a grid map to a ROS occupancy map.
  */
 inline
-boost::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros( std::shared_ptr<GridMap<float>> map,
+std::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros( std::shared_ptr<GridMap<float>> map,
                         Matrix<double, 3, 1> origin,
                         rclcpp::Time m_tCurrentTimeStamp)
 {
-  auto grid = boost::make_shared<nav_msgs::msg::OccupancyGrid>();
+  auto grid = std::make_shared<nav_msgs::msg::OccupancyGrid>();
   tf2::Quaternion q;
   grid->header.stamp = m_tCurrentTimeStamp;
   grid->info.resolution = map->scale();
@@ -105,7 +103,7 @@ boost::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros( std::shared_ptr<
  * Converts a grid map to a binary (-1, 0 or 100) ROS occupancy map.
  */
 inline
-boost::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros_binary(  std::shared_ptr<GridMap<float>> map,
+std::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros_binary(  std::shared_ptr<GridMap<float>> map,
                           Matrix<double, 3, 1> origin,
                           float threshold,
                           rclcpp::Time m_tCurrentTimeStamp)
@@ -118,7 +116,7 @@ boost::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros_binary(  std::sha
       {0.00118231, 0.01357, 0.0276652, 0.01357, 0.00118231},
   };
 
-  auto grid = boost::make_shared<nav_msgs::msg::OccupancyGrid>();
+  auto grid = std::make_shared<nav_msgs::msg::OccupancyGrid>();
   grid->header.stamp = m_tCurrentTimeStamp;
   grid->info.resolution = map->scale();
   grid->info.width = map->size_x();
