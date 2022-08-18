@@ -24,9 +24,12 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - uses: actions/checkout@v2
       - uses: ros-tooling/setup-ros@0.3.4
         with:
           use-ros2-testing: false
       - uses: ros-tooling/action-ros-ci@0.2.6
         with:
           target-ros2-distro: rolling
+          package-name: neo_common2
+          vcs-repo-file-url: "${{ github.workspace }}/.github/workflows/ros_deps.repos"
