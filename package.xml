@@ -22,10 +22,7 @@
     <exec_depend>sensor_msgs</exec_depend>
     <exec_depend>neo_common2</exec_depend>
     <exec_depend>std_srvs</exec_depend>
-    <exec_depend>nav2_core</exec_depend>
-    <exec_depend>nav2_costmap_2d</exec_depend>
-    <exec_depend>nav2_util</exec_depend>
-
+    <exec_depend>angles</exec_depend>
     <export>
         <build_type>ament_cmake</build_type>
     </export>
