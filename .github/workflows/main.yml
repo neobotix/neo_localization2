@@ -37,8 +37,6 @@ jobs:
           colcon-defaults: |
             {
               "build": {
-               "cmake-args": [
                 "symlink-install": true
-              ]
-             }
+              }
             }
