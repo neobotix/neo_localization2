@@ -4,11 +4,11 @@ name: neobotix-CI
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "rolling" branch
+  # Triggers the workflow on push or pull request events but only for the "humble" branch
   push:
-    branches: [ "rolling" ]
+    branches: [ "humble" ]
   pull_request:
-    branches: [ "rolling" ]
+    branches: [ "humble" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -30,7 +30,7 @@ jobs:
           use-ros2-testing: false
       - uses: ros-tooling/action-ros-ci@0.2.6
         with:
-          target-ros2-distro: rolling
+          target-ros2-distro: humble
           package-name: neo_localization2
           skip-tests: true
           vcs-repo-file-url: "${{ github.workspace }}/.github/workflows/ros_deps.repos"
