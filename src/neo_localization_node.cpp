@@ -4,8 +4,6 @@
  *  Created on: Apr 8, 2020
  *      Author: mad
  */
-#define BOOST_BIND_NO_PLACEHOLDERS
-
 #include <neo_localization/Util.h>
 #include <neo_localization/Convert.h>
 #include <neo_localization/Solver.h>
@@ -262,7 +260,6 @@ protected:
     return points;
   }
 
-// Here
   void loc_update()
   {
     std::lock_guard<std::mutex> lock(m_node_mutex);
@@ -673,7 +670,7 @@ protected:
    */
   void update_loop()
   {
-    RCLCPP_WARN_STREAM(this->get_logger(),"NeoLocalizationNode: update_map() failed:");
+    RCLCPP_INFO_ONCE(this->get_logger(),"NeoLocalizationNode: Activating map update loop");
 
     rclcpp::Rate loop_rate(m_map_update_rate);
     while(rclcpp::ok()) {
@@ -789,7 +786,6 @@ private:
   rclcpp::TimerBase::SharedPtr m_loc_update_timer;
 
 };
-
 
 int main(int argc, char** argv)
 {
