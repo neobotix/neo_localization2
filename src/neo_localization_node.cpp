@@ -230,7 +230,7 @@ protected:
       return points;
     }
     try {
-      auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, scan->header.stamp);
+      auto tempTransform = buffer->lookupTransform(m_odom_frame, m_base_frame, scan->header.stamp, tf2::durationFromSec(0.02));
       tf2::fromMsg(tempTransform, base_to_odom);
       } catch(const std::exception& ex) {
       RCLCPP_WARN_STREAM(this->get_logger(), "NeoLocalizationNode: lookupTransform(m_base_frame, m_odom_frame) failed: " << ex.what());
