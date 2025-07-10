@@ -27,27 +27,23 @@ include_directories(
   include
 )
 
-set(dependencies
-  rclcpp
-  geometry_msgs
-  nav_msgs
-  tf2_ros
-  angles
-  tf2_sensor_msgs
-  tf2_geometry_msgs
-  tf2_eigen
-  sensor_msgs
-  nav_msgs
-)
-
-
 set(library_name neo_localization_node)
 
 add_executable(${library_name} src/neo_localization_node.cpp)
 
-ament_target_dependencies(${library_name}
-  ${dependencies}
-)
+target_link_libraries(neo_localization_node PUBLIC
+      ${geometry_msgs_TARGETS}
+      ${nav_msgs_TARGETS}
+      ${sensor_msgs_TARGETS}
+      angles::angles
+      rclcpp::rclcpp
+      sensor_msgs::sensor_msgs_library
+      tf2_eigen::tf2_eigen
+      tf2_geometry_msgs::tf2_geometry_msgs
+      tf2_ros::static_transform_broadcaster_node
+      tf2_ros::tf2_ros
+      tf2_sensor_msgs::tf2_sensor_msgs
+    )
 
 ament_export_include_directories(include)
 ament_export_libraries(${library_name})
