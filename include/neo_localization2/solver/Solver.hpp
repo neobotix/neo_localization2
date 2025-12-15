@@ -20,16 +20,16 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
- */
+*/
 
-#ifndef INCLUDE_SOLVER_H_
-#define INCLUDE_SOLVER_H_
-
-#include <neo_localization/Util.h>
-#include <neo_localization/GridMap.h>
+#ifndef NEO_LOCALIZATION2__SOLVER__SOLVER_HPP_
+#define NEO_LOCALIZATION2__SOLVER__SOLVER_HPP_
 
 #include <vector>
+#include "neo_localization2/map/GridMap.hpp"
 
+namespace neo_localization2
+{
 
 struct scan_point_t
 {
@@ -216,6 +216,7 @@ Matrix<double, 3, 3> compute_virtual_scan_covariance_xyw( std::shared_ptr<const 
   return var_xyw;
 }
 
+}
 
+#endif
 
-#endif /* INCLUDE_SOLVER_H_ */
