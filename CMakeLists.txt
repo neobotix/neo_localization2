@@ -3,8 +3,13 @@ project(neo_localization2)
 
 find_package(ament_cmake REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(nav2_common REQUIRED)
+find_package(nav2_util REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
@@ -13,57 +18,90 @@ find_package(ament_cmake REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(angles REQUIRED)
 
+nav2_package()
 
-set(CMAKE_CXX_STANDARD 17)
+set(executable_name neo_localization_node)
+set(library_name ${executable_name}_core)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release"
-      CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
-      FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
-
-include_directories(
-  ${Boost_INCLUDE_DIRS}
-  include
+# Main library
+add_library(${library_name} SHARED
+  src/neo_localization_node.cpp
 )
 
-set(library_name neo_localization_node)
-
-add_executable(${library_name} src/neo_localization_node.cpp)
-
-target_link_libraries(neo_localization_node PUBLIC
-      ${geometry_msgs_TARGETS}
-      ${nav_msgs_TARGETS}
-      ${sensor_msgs_TARGETS}
-      angles::angles
-      rclcpp::rclcpp
-      sensor_msgs::sensor_msgs_library
-      tf2_eigen::tf2_eigen
-      tf2_geometry_msgs::tf2_geometry_msgs
-      tf2_ros::static_transform_broadcaster_node
-      tf2_ros::tf2_ros
-      tf2_sensor_msgs::tf2_sensor_msgs
-    )
-
-ament_export_include_directories(include)
-ament_export_libraries(${library_name})
-ament_export_dependencies(${dependencies})
 target_include_directories(${library_name}
   PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-
-install(DIRECTORY include/
-   DESTINATION include/
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
 )
 
-install(TARGETS ${library_name}
-DESTINATION lib/${PROJECT_NAME}
-  )
+target_link_libraries(${library_name} PUBLIC
+  ${geometry_msgs_TARGETS}
+  nav2_util::nav2_util_core
+  angles::angles
+  ${sensor_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+  rclcpp::rclcpp
+  rclcpp_lifecycle::rclcpp_lifecycle
+  ${nav_msgs_TARGETS}
+  tf2_ros::tf2_ros
+  tf2::tf2
+  ${nav2_msgs_TARGETS}
+)
 
-install(DIRECTORY launch
-    
-DESTINATION share/${PROJECT_NAME})
+target_link_libraries(${library_name} PRIVATE
+  rclcpp_components::component
+)
 
+# Main executable
+add_executable(${executable_name}
+  src/main.cpp
+)
+
+target_link_libraries(${executable_name} PRIVATE ${library_name} rclcpp::rclcpp)
+
+rclcpp_components_register_nodes(${library_name} "neo_localization2::NeoLocalizationNode")
+
+install(
+  TARGETS ${library_name} 
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(TARGETS ${executable_name}
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY include/
+  DESTINATION include/${PROJECT_NAME}
+)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  set(ament_cmake_copyright_FOUND TRUE)
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+ament_export_include_directories("include/${PROJECT_NAME}")
+ament_export_libraries(${library_name})
+ament_export_dependencies(
+  geometry_msgs
+  nav_msgs
+  nav2_msgs
+  nav2_util
+  rclcpp
+  rclcpp_lifecycle
+  sensor_msgs
+  std_srvs
+  tf2
+  tf2_ros
+  tf2_sensor_msgs
+  tf2_geometry_msgs
+  tf2_eigen
+  angles
+)
+
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
 ament_package()
