@@ -25,7 +25,7 @@ def generate_launch_description() -> LaunchDescription:
     use_respawn = LaunchConfigAsBool('use_respawn')
     log_level = LaunchConfiguration('log_level')
 
-    lifecycle_nodes = ['neo_localization']
+    lifecycle_nodes = ['neo_localization2_node']
 
     # Map fully qualified names to relative ones so the node's namespace can be prepended.
     remappings = [('/tf', 'tf'), ('/tf_static', 'tf_static')]
@@ -96,7 +96,7 @@ def generate_launch_description() -> LaunchDescription:
             Node(
                 package='neo_localization2',
                 executable='neo_localization',
-                name='neo_localization',
+                name='neo_localization2_node',
                 output='screen',
                 respawn=use_respawn,
                 respawn_delay=2.0,
@@ -124,7 +124,7 @@ def generate_launch_description() -> LaunchDescription:
                     ComposableNode(
                         package='neo_localization2',
                         plugin='neo_localization2::NeoLocalizationNode',
-                        name='neo_localization',
+                        name='neo_localization2_node',
                         parameters=[configured_params],
                         remappings=remappings,
                     ),
