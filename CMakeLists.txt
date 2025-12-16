@@ -105,4 +105,6 @@ ament_export_dependencies(
   nav2_ros_common
 )
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
+
 ament_package()
