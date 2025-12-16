@@ -17,11 +17,10 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(angles REQUIRED)
-find_package(nav2_ros_common REQUIRED)
 
 nav2_package()
 
-set(executable_name neo_localization)
+set(executable_name neo_localization_node)
 set(library_name ${executable_name}_core)
 
 # Main library
@@ -38,7 +37,6 @@ target_include_directories(${library_name}
 target_link_libraries(${library_name} PUBLIC
   ${geometry_msgs_TARGETS}
   nav2_util::nav2_util_core
-  nav2_ros_common::nav2_ros_common
   angles::angles
   ${sensor_msgs_TARGETS}
   ${std_srvs_TARGETS}
@@ -102,7 +100,6 @@ ament_export_dependencies(
   tf2_geometry_msgs
   tf2_eigen
   angles
-  nav2_ros_common
 )
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})

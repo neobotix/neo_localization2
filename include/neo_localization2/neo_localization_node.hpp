@@ -5,8 +5,8 @@
 #include "neo_localization2/utils/Convert.hpp"
 #include "neo_localization2/solver/Solver.hpp"
 #include "neo_localization2/map/GridMap.hpp"
-#include "nav2_ros_common/lifecycle_node.hpp"
-#include "nav2_ros_common/node_utils.hpp"
+#include "nav2_util/lifecycle_node.hpp"
+#include "nav2_util/node_utils.hpp"
 #include "pluginlib/class_loader.hpp"
 #include "rclcpp/node_options.hpp"
 #include "angles/angles.h"
@@ -51,7 +51,7 @@ namespace neo_localization2
  * @class NeoLocalizationNode
  * @brief ROS wrapper for NeoLocalization
  */
-class NeoLocalizationNode: public nav2::LifecycleNode
+class NeoLocalizationNode: public nav2_util::LifecycleNode
 {
 public:
 
@@ -69,33 +69,33 @@ protected:
   /*
    * @brief Lifecycle configure
    */
-  nav2::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+  nav2_util::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
   /*
    * @brief Lifecycle activate
    */
-  nav2::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+  nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
   /*
    * @brief Lifecycle deactivate
    */
-  nav2::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+  nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
   /*
    * @brief Lifecycle cleanup
    */
-  nav2::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+  nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
   /*
    * @brief Lifecycle shutdown
    */
-  nav2::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
+  nav2_util::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
 
   /*
    * @brief Initialize parameters
    */
-  void initParameters(nav2::LifecycleNode::SharedPtr node);
+  void initParameters(nav2_util::LifecycleNode::SharedPtr node);
 
   /*
    * @brief Get parameters
    */
-  void getParameters(nav2::LifecycleNode::SharedPtr node);
+  void getParameters(nav2_util::LifecycleNode::SharedPtr node);
 
   /*
    * @brief Initialize transforms
@@ -160,15 +160,15 @@ protected:
 private:
   std::mutex m_node_mutex;
 
-  nav2::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr m_pub_map_tile;
-  nav2::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose;
-  nav2::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose_2;
-  nav2::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr m_pub_pose_array;
+  rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::OccupancyGrid>::SharedPtr m_pub_map_tile;
+  rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose;
+  rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose_2;
+  rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PoseArray>::SharedPtr m_pub_pose_array;
 
-  nav2::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_sub_map_topic;
-  nav2::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_sub_scan_topic;
-  nav2::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_sub_pose_estimate;
-  nav2::Subscription<std_msgs::msg::Bool>::SharedPtr m_sub_only_use_odom;
+  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_sub_map_topic;
+  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_sub_scan_topic;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_sub_pose_estimate;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr m_sub_only_use_odom;
   std::shared_ptr<tf2_ros::TransformBroadcaster> m_tf_broadcaster;
 
   bool m_broadcast_tf = false;
@@ -250,7 +250,7 @@ private:
   // in order to isolate TF timer used in message filter.
   rclcpp::CallbackGroup::SharedPtr callback_group_;
   rclcpp::executors::SingleThreadedExecutor::SharedPtr executor_;
-  std::unique_ptr<nav2::NodeThread> executor_thread_;
+  std::unique_ptr<nav2_util::NodeThread> executor_thread_;
 };
 
 } //namespace neo_localization2
