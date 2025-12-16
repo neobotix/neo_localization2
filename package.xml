@@ -13,21 +13,25 @@
     <url>https://github.com/neobotix/neo_localization2</url>
 
     <buildtool_depend>ament_cmake</buildtool_depend>
+    <build_depend>nav2_common</build_depend>
 
-    <exec_depend>rclcpp</exec_depend>
-    <exec_depend>tf2_eigen</exec_depend>
-    <exec_depend>tf2_ros</exec_depend>
-    <exec_depend>tf2_sensor_msgs</exec_depend>
-    <exec_depend>tf2_geometry_msgs</exec_depend>
-    <exec_depend>geometry_msgs</exec_depend>
-    <exec_depend>nav_msgs</exec_depend>
-    <exec_depend>sensor_msgs</exec_depend>
-    <exec_depend>std_srvs</exec_depend>
-    <exec_depend>angles</exec_depend>
+    <depend>nav2_util</depend>
+    <depend>rclcpp</depend>
+    <depend>rclcpp_lifecycle</depend>
+    <depend>rclcpp_components</depend>
+    <depend>tf2</depend>
+    <depend>tf2_eigen</depend>
+    <depend>tf2_ros</depend>
+    <depend>tf2_sensor_msgs</depend>
+    <depend>tf2_geometry_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>nav_msgs</depend>
+    <depend>sensor_msgs</depend>
+    <depend>std_srvs</depend>
+    <depend>angles</depend>
+
     <export>
         <build_type>ament_cmake</build_type>
     </export>
 
 </package>
-
-

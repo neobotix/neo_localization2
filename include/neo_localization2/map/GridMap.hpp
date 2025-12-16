@@ -21,8 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
-#ifndef INCLUDE_GRIDMAP_H_
-#define INCLUDE_GRIDMAP_H_
+
+#ifndef NEO_LOCALIZATION2__MAP__GRIDMAP_HPP_
+#define NEO_LOCALIZATION2__MAP__GRIDMAP_HPP_
 
 #include <math.h>
 #include <stdint.h>
@@ -31,6 +32,8 @@ SOFTWARE.
 #include <memory>
 #include <vector>
 
+namespace neo_localization2
+{
 
 /*
  * Class for a rectangular grid map.
@@ -390,9 +393,10 @@ public:
     }
   }
 
-
 };
 
+}
+
+#endif //NEO_LOCALIZATION2__MAP__GRIDMAP_HPP_
 
 
-#endif /* INCLUDE_GRIDMAP_H_ */

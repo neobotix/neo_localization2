@@ -22,17 +22,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-#ifndef INCLUDE_NEO_LOCALIZATION_CONVERT_H_
-#define INCLUDE_NEO_LOCALIZATION_CONVERT_H_
+#ifndef NEO_LOCALIZATION2__UTILS__CONVERT_HPP_
+#define NEO_LOCALIZATION2__UTILS__CONVERT_HPP_
 
-#include <neo_localization/GridMap.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp> 
-#include <tf2/transform_datatypes.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/utils.h>
+#include <tf2/transform_datatypes.hpp>
+#include <tf2/LinearMath/Quaternion.hpp>
+#include <tf2/utils.hpp>
 #include "rclcpp/rclcpp.hpp"
-#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Transform.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
+#include "neo_localization2/utils/Matrix.hpp"
+#include "neo_localization2/map/GridMap.hpp"
+
+namespace neo_localization2
+{
 
 /*
  * Converts ROS 3D Transform to a 2.5D matrix.
@@ -150,5 +154,6 @@ std::shared_ptr<nav_msgs::msg::OccupancyGrid> convert_to_ros_binary(  std::share
   return grid;
 }
 
+}
 
-#endif /* INCLUDE_NEO_LOCALIZATION_CONVERT_H_ */
+#endif //NEO_LOCALIZATION2__UTILS__CONVERT_HPP_
