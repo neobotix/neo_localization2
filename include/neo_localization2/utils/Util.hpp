@@ -22,13 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-#ifndef INCLUDE_NEO_LOCALIZATION_UTIL_H_
-#define INCLUDE_NEO_LOCALIZATION_UTIL_H_
-
-#include <neo_localization/Matrix.h>
+#ifndef NEO_LOCALIZATION2__UTILS__UTIL_HPP_
+#define NEO_LOCALIZATION2__UTILS__UTIL_HPP_
 
 #include <vector>
+#include "neo_localization2/utils/Matrix.hpp"
 
+namespace neo_localization2
+{
 
 template<typename T>
 Matrix<T, 3, 3> rotate2_z(T rad) {
@@ -152,8 +153,8 @@ Matrix<T, N, N> compute_covariance(const std::vector<Matrix<T, M, 1>>& points, M
 
   Matrix<T, N, N> mat;
   for(auto point : points) {
-    for(int j = 0; j < N; ++j) {
-      for(int i = 0; i < N; ++i) {
+    for(unsigned long j = 0; j < N; ++j) {
+      for(unsigned long i = 0; i < N; ++i) {
         mat(i, j) += (point[i] - mean[i]) * (point[j] - mean[j]);
       }
     }
@@ -224,5 +225,6 @@ Matrix<T, 2, 1> compute_eigenvectors_2( const Matrix<T, 2, 2>& mat,
   return eigen_values;
 }
 
+}
 
-#endif /* INCLUDE_NEO_LOCALIZATION_UTIL_H_ */
+#endif // NEO_LOCALIZATION2__UTILS__UTIL_HPP_ 

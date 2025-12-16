@@ -42,6 +42,8 @@
 #include <stdexcept>
 #include <initializer_list>
 
+namespace neo_localization2
+{
 
 template<typename T>
 class MatrixX;
@@ -188,7 +190,7 @@ public:
 		if(Rows != Cols) {
 			throw std::logic_error("Rows != Cols");
 		}
-		return ::inverse<T>(*this);
+		return neo_localization2::inverse<T>(*this);
 	}
 
 	template<size_t N, size_t M = 1>
@@ -447,5 +449,6 @@ Matrix<T, 4, 4> inverse(const Matrix<T, 4, 4>& m) {
 	return tmp * (T(1) / det);
 }
 
+}
 
 #endif /* INCLUDE_MATH_MATRIX_H_ */
