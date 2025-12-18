@@ -210,6 +210,7 @@ void NeoLocalizationNode::initParameters(nav2::LifecycleNode::SharedPtr node)
   declare_parameter_if_not_declared(node, "initial_pose.x", rclcpp::ParameterValue(0.0)); //"Initial pose x");
   declare_parameter_if_not_declared(node, "initial_pose.y", rclcpp::ParameterValue(0.0)); //"Initial pose y");
   declare_parameter_if_not_declared(node, "initial_pose.yaw", rclcpp::ParameterValue(0.0)); //"Initial pose yaw");
+  declare_parameter_if_not_declared(node, "only_use_odom_enable", rclcpp::ParameterValue(false)); //"Enable a subscriber to choose whether only use odom when localizing or not");
 }
 
 void NeoLocalizationNode::getParameters(nav2::LifecycleNode::SharedPtr node)
@@ -253,6 +254,7 @@ void NeoLocalizationNode::getParameters(nav2::LifecycleNode::SharedPtr node)
   node->get_parameter("initial_pose.x", m_offset_x);
   node->get_parameter("initial_pose.y", m_offset_y);
   node->get_parameter("initial_pose.yaw", m_offset_yaw);
+  node->get_parameter("only_use_odom_enable", m_only_use_odom_enable);
 }
 
 void NeoLocalizationNode::initTransforms()
@@ -268,7 +270,9 @@ void NeoLocalizationNode::initPubSub()
   m_sub_scan_topic = create_subscription<sensor_msgs::msg::LaserScan>(m_scan_topic, std::bind(&NeoLocalizationNode::scan_callback, this, _1), nav2::qos::SensorDataQoS());
   m_sub_map_topic = create_subscription<nav_msgs::msg::OccupancyGrid>("/map", std::bind(&NeoLocalizationNode::map_callback, this, _1), nav2::qos::LatchedSubscriptionQoS(1));
   m_sub_pose_estimate = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(m_initial_pose, std::bind(&NeoLocalizationNode::pose_callback, this, _1), nav2::qos::StandardTopicQoS(1));
-  m_sub_only_use_odom = create_subscription<std_msgs::msg::Bool>("/global_costmap/binary_state", std::bind(&NeoLocalizationNode::use_odom_callback, this, _1), nav2::qos::LatchedSubscriptionQoS(10));
+  if (m_only_use_odom_enable) {
+    m_sub_only_use_odom = create_subscription<std_msgs::msg::Bool>("/only_use_odom", std::bind(&NeoLocalizationNode::use_odom_callback, this, _1), nav2::qos::LatchedSubscriptionQoS(10));
+  }
 
   // Init Publishers
   m_pub_map_tile = create_publisher<nav_msgs::msg::OccupancyGrid>(m_map_tile, nav2::qos::StandardTopicQoS(1));
@@ -847,7 +851,7 @@ NeoLocalizationNode::dynamicParametersCallback(std::vector<rclcpp::Parameter> pa
 
   for (const auto & p : parameters) {
     const std::string & name = p.get_name();
-    if (name == "loc_update_rate" || name == "loc_update_rate_ms") {
+    if (name == "loc_update_rate" || name == "loc_update_rate_ms" || name == "only_use_odom_enable") {
       res.successful = false;
       res.reason = name + ": cannot be changed at runtime";
       return res;
