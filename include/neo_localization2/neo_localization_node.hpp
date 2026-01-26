@@ -174,6 +174,7 @@ private:
   bool m_broadcast_tf = false;
   bool m_initialized = false;
   bool m_set_initial_pose = false;
+  bool m_only_use_odom_enable = false;
   std::string m_base_frame;
   std::string m_odom_frame;
   std::string m_map_frame;
