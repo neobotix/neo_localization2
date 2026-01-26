@@ -7,7 +7,6 @@
 #include "neo_localization2/map/GridMap.hpp"
 #include "nav2_util/lifecycle_node.hpp"
 #include "nav2_util/node_utils.hpp"
-#include "pluginlib/class_loader.hpp"
 #include "rclcpp/node_options.hpp"
 #include "angles/angles.h"
 #include <tf2_ros/transform_listener.hpp>
