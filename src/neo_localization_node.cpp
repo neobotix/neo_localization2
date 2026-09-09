@@ -58,6 +58,13 @@ nav2_util::CallbackReturn NeoLocalizationNode::on_activate(const rclcpp_lifecycl
 {
   RCLCPP_INFO(get_logger(), "Activating");
 
+  // The map subscription is disabled while the lifecycle node is inactive so
+  // mapping and map-saving traffic is not processed by localization. Its
+  // transient-local QoS restores the latest map when localization is activated.
+  if (!m_sub_map_topic) {
+    initMapSubscription();
+  }
+
   // Lifecycle publishers must be explicitly activated
   m_pub_map_tile->on_activate();
   m_pub_loc_pose->on_activate();
@@ -98,6 +105,9 @@ nav2_util::CallbackReturn NeoLocalizationNode::on_deactivate(const rclcpp_lifecy
     m_loc_update_timer->cancel();
     m_loc_update_timer.reset();  
   }
+
+  // Stop receiving and processing SLAM map updates while localization is inactive.
+  m_sub_map_topic.reset();
 
   // ask background loop to stop, but DO NOT join here
   stop_threads_ = true;
@@ -268,7 +278,7 @@ void NeoLocalizationNode::initPubSub()
 {
   // Init Subscribers
   m_sub_scan_topic = create_subscription<sensor_msgs::msg::LaserScan>(m_scan_topic, rclcpp::SensorDataQoS(), std::bind(&NeoLocalizationNode::scan_callback, this, _1));
-  m_sub_map_topic = create_subscription<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::QoS(1).transient_local().reliable(), std::bind(&NeoLocalizationNode::map_callback, this, _1));
+  initMapSubscription();
   m_sub_pose_estimate = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(m_initial_pose, rclcpp::QoS(1).reliable(), std::bind(&NeoLocalizationNode::pose_callback, this, _1));
   if (m_only_use_odom_enable) {
     m_sub_only_use_odom = create_subscription<std_msgs::msg::Bool>("/only_use_odom", rclcpp::QoS(10).transient_local().reliable(), std::bind(&NeoLocalizationNode::use_odom_callback, this, _1));
@@ -279,6 +289,13 @@ void NeoLocalizationNode::initPubSub()
   m_pub_loc_pose = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(m_amcl_pose, rclcpp::QoS(1).transient_local().reliable());
   m_pub_loc_pose_2 = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(m_map_pose, rclcpp::QoS(10));
   m_pub_pose_array = create_publisher<geometry_msgs::msg::PoseArray>(m_particle_cloud, rclcpp::QoS(10));
+}
+
+void NeoLocalizationNode::initMapSubscription()
+{
+  m_sub_map_topic = create_subscription<nav_msgs::msg::OccupancyGrid>(
+    "/map", rclcpp::QoS(1).transient_local().reliable(),
+    std::bind(&NeoLocalizationNode::map_callback, this, _1));
 }
 
 void NeoLocalizationNode::initNameSpace()
@@ -976,4 +993,3 @@ NeoLocalizationNode::dynamicParametersCallback(std::vector<rclcpp::Parameter> pa
 
 #include "rclcpp_components/register_node_macro.hpp"
 RCLCPP_COMPONENTS_REGISTER_NODE(neo_localization2::NeoLocalizationNode)
-
