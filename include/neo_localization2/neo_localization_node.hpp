@@ -108,6 +108,11 @@ protected:
   void initPubSub();
 
   /*
+   * @brief Initialize the map subscription
+   */
+  void initMapSubscription();
+
+  /*
    * @brief Initialize robot namespace
    */
   void initNameSpace();
