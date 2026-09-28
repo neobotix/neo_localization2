@@ -21,6 +21,7 @@
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <neo_localization2/msg/localization_status.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <chrono>
 #include <memory>
@@ -168,6 +169,8 @@ private:
   rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose;
   rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pub_loc_pose_2;
   rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PoseArray>::SharedPtr m_pub_pose_array;
+  rclcpp_lifecycle::LifecyclePublisher<neo_localization2::msg::LocalizationStatus>::SharedPtr
+    m_pub_localization_status;
 
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_sub_map_topic;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_sub_scan_topic;
@@ -189,6 +192,7 @@ private:
   std::string m_map_pose;
   std::string m_particle_cloud;
   std::string m_amcl_pose;
+  std::string m_localization_status;
   std::string m_ns = "";
 
   int m_map_size = 0;
@@ -230,6 +234,8 @@ private:
   bool map_received_ = false;
 
   int64_t update_counter = 0;
+  std::chrono::steady_clock::time_point m_last_status_update;
+  bool m_has_last_status_update = false;
   std::map<std::string, sensor_msgs::msg::LaserScan::SharedPtr> m_scan_buffer;
 
   Solver m_solver;
