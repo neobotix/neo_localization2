@@ -70,6 +70,8 @@ nav2_util::CallbackReturn NeoLocalizationNode::on_activate(const rclcpp_lifecycl
   m_pub_loc_pose->on_activate();
   m_pub_loc_pose_2->on_activate();
   m_pub_pose_array->on_activate();
+  m_pub_localization_status->on_activate();
+  m_has_last_status_update = false;
 
   auto node = shared_from_this();
 
@@ -125,6 +127,7 @@ nav2_util::CallbackReturn NeoLocalizationNode::on_deactivate(const rclcpp_lifecy
   m_pub_loc_pose->on_deactivate();
   m_pub_loc_pose_2->on_deactivate();
   m_pub_pose_array->on_deactivate();
+  m_pub_localization_status->on_deactivate();
 
   return nav2_util::CallbackReturn::SUCCESS;
 }
@@ -162,6 +165,8 @@ nav2_util::CallbackReturn NeoLocalizationNode::on_cleanup(const rclcpp_lifecycle
   m_pub_loc_pose.reset();
   m_pub_loc_pose_2.reset();
   m_pub_pose_array.reset();
+  m_pub_localization_status.reset();
+  m_has_last_status_update = false;
 
   m_sub_pose_estimate.reset();
   m_sub_scan_topic.reset();
@@ -215,6 +220,7 @@ void NeoLocalizationNode::initParameters(nav2_util::LifecycleNode::SharedPtr nod
   declare_parameter_if_not_declared(node, "map_pose", rclcpp::ParameterValue("map_pose")); //"Name of map pose topic");
   declare_parameter_if_not_declared(node, "particle_cloud", rclcpp::ParameterValue("particlecloud")); //"Name of particle_cloud topic");
   declare_parameter_if_not_declared(node, "amcl_pose", rclcpp::ParameterValue("amcl_pose")); //"Name of amcl_pose topic");
+  declare_parameter_if_not_declared(node, "localization_status", rclcpp::ParameterValue("localization_status")); //"Name of localization status topic");
   declare_parameter_if_not_declared(node, "broadcast_info", rclcpp::ParameterValue(false)); //"Broadcast info for debugging");
   declare_parameter_if_not_declared(node, "set_initial_pose", rclcpp::ParameterValue(true)); //"Whether auto set initial pose or not");
   declare_parameter_if_not_declared(node, "initial_pose.x", rclcpp::ParameterValue(0.0)); //"Initial pose x");
@@ -259,6 +265,7 @@ void NeoLocalizationNode::getParameters(nav2_util::LifecycleNode::SharedPtr node
   node->get_parameter("map_pose", m_map_pose);
   node->get_parameter("particle_cloud", m_particle_cloud);
   node->get_parameter("amcl_pose", m_amcl_pose);
+  node->get_parameter("localization_status", m_localization_status);
   node->get_parameter("broadcast_info", m_broadcast_info);
   node->get_parameter("set_initial_pose", m_set_initial_pose);
   node->get_parameter("initial_pose.x", m_offset_x);
@@ -289,6 +296,7 @@ void NeoLocalizationNode::initPubSub()
   m_pub_loc_pose = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(m_amcl_pose, rclcpp::QoS(1).transient_local().reliable());
   m_pub_loc_pose_2 = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(m_map_pose, rclcpp::QoS(10));
   m_pub_pose_array = create_publisher<geometry_msgs::msg::PoseArray>(m_particle_cloud, rclcpp::QoS(10));
+  m_pub_localization_status = create_publisher<neo_localization2::msg::LocalizationStatus>(m_localization_status, rclcpp::QoS(10));
 }
 
 void NeoLocalizationNode::initMapSubscription()
@@ -417,12 +425,14 @@ void NeoLocalizationNode::loc_update()
   const double rad_rotated = fabs(angles::normalize_angle(odom_pose[2] - m_last_odom_pose[2]));
 
   std::vector<scan_point_t> points;
+  size_t num_points_total = 0;
 
   RCLCPP_INFO_ONCE(this->get_logger(), "map_received");
   // convert all scans to current base frame
   for(const auto& scan : m_scan_buffer)
   {
-    
+    num_points_total += scan.second->ranges.size();
+
     auto scan_points = convert_scan(scan.second, L.inverse());
 
     points.insert(points.end(), scan_points.begin(), scan_points.end());
@@ -616,6 +626,32 @@ void NeoLocalizationNode::loc_update()
 
   // publish visualization
   m_pub_pose_array->publish(pose_array);
+
+  neo_localization2::msg::LocalizationStatus localization_status;
+  localization_status.header = loc_pose.header;
+  localization_status.mode = std::to_string(mode) + "D";
+
+  const auto status_update_time = std::chrono::steady_clock::now();
+  if (m_has_last_status_update) {
+    const double update_period =
+      std::chrono::duration<double>(status_update_time - m_last_status_update).count();
+    localization_status.update_rate = update_period > 0.0 ? 1.0 / update_period : 0.0;
+  } else {
+    localization_status.update_rate =
+      m_loc_update_time_ms > 0 ? 1000.0 / static_cast<double>(m_loc_update_time_ms) : 0.0;
+  }
+  m_last_status_update = status_update_time;
+  m_has_last_status_update = true;
+
+  const auto to_int16 = [](size_t count) {
+    return static_cast<int16_t>(std::min(
+      count, static_cast<size_t>(std::numeric_limits<int16_t>::max())));
+  };
+  localization_status.num_points = to_int16(points.size());
+  localization_status.num_points_total = to_int16(num_points_total);
+  localization_status.std_dev = {m_sample_std_xy, m_sample_std_xy, m_sample_std_yaw};
+  localization_status.score = best_score;
+  m_pub_localization_status->publish(localization_status);
 
   // keep last odom pose
   m_last_odom_pose = odom_pose;
@@ -876,7 +912,7 @@ NeoLocalizationNode::dynamicParametersCallback(std::vector<rclcpp::Parameter> pa
     if (name == "base_frame" || name == "odom_frame" || name == "map_frame" ||
         name == "scan_topic" || name == "map_topic" || name == "initialpose" ||
         name == "map_tile" || name == "map_pose" || name == "particle_cloud" ||
-        name == "amcl_pose")
+        name == "amcl_pose" || name == "localization_status")
     {
       res.successful = false;
       res.reason = name + ": read-only at runtime";

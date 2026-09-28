@@ -16,7 +16,14 @@ find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(angles REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/LocalizationStatus.msg"
+  DEPENDENCIES std_msgs
+)
 
 nav2_package()
 
@@ -28,6 +35,8 @@ add_library(${library_name} SHARED
   src/neo_localization_node.cpp
 )
 
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
 target_include_directories(${library_name}
   PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
@@ -36,6 +45,7 @@ target_include_directories(${library_name}
 
 target_link_libraries(${library_name} PUBLIC
   ${geometry_msgs_TARGETS}
+  ${cpp_typesupport_target}
   nav2_util::nav2_util_core
   angles::angles
   ${sensor_msgs_TARGETS}
@@ -93,6 +103,7 @@ ament_export_dependencies(
   rclcpp
   rclcpp_lifecycle
   sensor_msgs
+  std_msgs
   std_srvs
   tf2
   tf2_ros
