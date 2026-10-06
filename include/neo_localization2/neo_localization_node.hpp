@@ -7,7 +7,7 @@
 #include "neo_localization2/map/GridMap.hpp"
 #include "nav2_ros_common/lifecycle_node.hpp"
 #include "nav2_ros_common/node_utils.hpp"
-#include "pluginlib/class_loader.hpp"
+#include "nav2_ros_common/node_thread.hpp"
 #include "rclcpp/node_options.hpp"
 #include "angles/angles.h"
 #include <tf2_ros/transform_listener.hpp>
@@ -18,7 +18,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
-#include <geometry_msgs/msg/quaternion.h>
+#include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>

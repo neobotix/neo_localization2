@@ -269,7 +269,7 @@ void NeoLocalizationNode::getParameters(nav2::LifecycleNode::SharedPtr node)
 
 void NeoLocalizationNode::initTransforms()
 {
-  m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
+  m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(*this);
   buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*buffer);
 }
