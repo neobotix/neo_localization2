@@ -5,9 +5,9 @@
 #include "neo_localization2/utils/Convert.hpp"
 #include "neo_localization2/solver/Solver.hpp"
 #include "neo_localization2/map/GridMap.hpp"
-#include "nav2_util/lifecycle_node.hpp"
-#include "nav2_util/node_utils.hpp"
-#include "pluginlib/class_loader.hpp"
+#include "nav2_ros_common/lifecycle_node.hpp"
+#include "nav2_ros_common/node_utils.hpp"
+#include "nav2_ros_common/node_thread.hpp"
 #include "rclcpp/node_options.hpp"
 #include "angles/angles.h"
 #include <tf2_ros/transform_listener.hpp>
@@ -18,7 +18,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
-#include <geometry_msgs/msg/quaternion.h>
+#include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -51,7 +51,7 @@ namespace neo_localization2
  * @class NeoLocalizationNode
  * @brief ROS wrapper for NeoLocalization
  */
-class NeoLocalizationNode: public nav2_util::LifecycleNode
+class NeoLocalizationNode: public nav2::LifecycleNode
 {
 public:
 
@@ -69,33 +69,33 @@ protected:
   /*
    * @brief Lifecycle configure
    */
-  nav2_util::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+  nav2::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
   /*
    * @brief Lifecycle activate
    */
-  nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+  nav2::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
   /*
    * @brief Lifecycle deactivate
    */
-  nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+  nav2::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
   /*
    * @brief Lifecycle cleanup
    */
-  nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+  nav2::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
   /*
    * @brief Lifecycle shutdown
    */
-  nav2_util::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
+  nav2::CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
 
   /*
    * @brief Initialize parameters
    */
-  void initParameters(nav2_util::LifecycleNode::SharedPtr node);
+  void initParameters(nav2::LifecycleNode::SharedPtr node);
 
   /*
    * @brief Get parameters
    */
-  void getParameters(nav2_util::LifecycleNode::SharedPtr node);
+  void getParameters(nav2::LifecycleNode::SharedPtr node);
 
   /*
    * @brief Initialize transforms
@@ -251,7 +251,7 @@ private:
   // in order to isolate TF timer used in message filter.
   rclcpp::CallbackGroup::SharedPtr callback_group_;
   rclcpp::executors::SingleThreadedExecutor::SharedPtr executor_;
-  std::unique_ptr<nav2_util::NodeThread> executor_thread_;
+  std::unique_ptr<nav2::NodeThread> executor_thread_;
 };
 
 } //namespace neo_localization2

@@ -3,7 +3,7 @@
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 using std::placeholders::_2;
-using nav2_util::declare_parameter_if_not_declared;
+using nav2::declare_parameter_if_not_declared;
 using rcl_interfaces::msg::ParameterType;
 
 
@@ -11,7 +11,7 @@ namespace neo_localization2
 {
 
 NeoLocalizationNode::NeoLocalizationNode(const rclcpp::NodeOptions & options)
-: nav2_util::LifecycleNode("neo_localization_node", "", options)
+: nav2::LifecycleNode("neo_localization_node", "", options)
 {
   RCLCPP_INFO(get_logger(), "Creating");
 }
@@ -28,7 +28,7 @@ NeoLocalizationNode::~NeoLocalizationNode()
   }
 }
 
-nav2_util::CallbackReturn NeoLocalizationNode::on_configure(const rclcpp_lifecycle::State & /*state*/)
+nav2::CallbackReturn NeoLocalizationNode::on_configure(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Configuring");
   auto node = shared_from_this();
@@ -49,12 +49,12 @@ nav2_util::CallbackReturn NeoLocalizationNode::on_configure(const rclcpp_lifecyc
 
   executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
   executor_->add_callback_group(callback_group_, get_node_base_interface());
-  executor_thread_ = std::make_unique<nav2_util::NodeThread>(executor_);
+  executor_thread_ = std::make_unique<nav2::NodeThread>(executor_);
 
-  return nav2_util::CallbackReturn::SUCCESS;
+  return nav2::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn NeoLocalizationNode::on_activate(const rclcpp_lifecycle::State & /*state*/)
+nav2::CallbackReturn NeoLocalizationNode::on_activate(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Activating");
 
@@ -86,10 +86,10 @@ nav2_util::CallbackReturn NeoLocalizationNode::on_activate(const rclcpp_lifecycl
   // create bond connection
   createBond();
 
-  return nav2_util::CallbackReturn::SUCCESS;
+  return nav2::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn NeoLocalizationNode::on_deactivate(const rclcpp_lifecycle::State &)
+nav2::CallbackReturn NeoLocalizationNode::on_deactivate(const rclcpp_lifecycle::State &)
 {
   RCLCPP_INFO(get_logger(), "Deactivating");
 
@@ -116,10 +116,10 @@ nav2_util::CallbackReturn NeoLocalizationNode::on_deactivate(const rclcpp_lifecy
   m_pub_loc_pose_2->on_deactivate();
   m_pub_pose_array->on_deactivate();
 
-  return nav2_util::CallbackReturn::SUCCESS;
+  return nav2::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn NeoLocalizationNode::on_cleanup(const rclcpp_lifecycle::State &)
+nav2::CallbackReturn NeoLocalizationNode::on_cleanup(const rclcpp_lifecycle::State &)
 {
   RCLCPP_INFO(get_logger(), "Cleaning up");
 
@@ -159,17 +159,17 @@ nav2_util::CallbackReturn NeoLocalizationNode::on_cleanup(const rclcpp_lifecycle
   m_sub_only_use_odom.reset();
 
 
-  return nav2_util::CallbackReturn::SUCCESS;
+  return nav2::CallbackReturn::SUCCESS;
 }
 
 
-nav2_util::CallbackReturn NeoLocalizationNode::on_shutdown(const rclcpp_lifecycle::State & /*state*/)
+nav2::CallbackReturn NeoLocalizationNode::on_shutdown(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(get_logger(), "Shutting down");
-  return nav2_util::CallbackReturn::SUCCESS;
+  return nav2::CallbackReturn::SUCCESS;
 }
 
-void NeoLocalizationNode::initParameters(nav2_util::LifecycleNode::SharedPtr node)
+void NeoLocalizationNode::initParameters(nav2::LifecycleNode::SharedPtr node)
 {
   // Declare parameters
   declare_parameter_if_not_declared(node, "base_frame", rclcpp::ParameterValue("base_link")); //"Which frame to use for the robot base");
@@ -213,7 +213,7 @@ void NeoLocalizationNode::initParameters(nav2_util::LifecycleNode::SharedPtr nod
   declare_parameter_if_not_declared(node, "only_use_odom_enable", rclcpp::ParameterValue(false)); //"Enable a subscriber to choose whether only use odom when localizing or not");
 }
 
-void NeoLocalizationNode::getParameters(nav2_util::LifecycleNode::SharedPtr node)
+void NeoLocalizationNode::getParameters(nav2::LifecycleNode::SharedPtr node)
 {
   // Get parameters
   node->get_parameter("base_frame", m_base_frame);
@@ -259,7 +259,7 @@ void NeoLocalizationNode::getParameters(nav2_util::LifecycleNode::SharedPtr node
 
 void NeoLocalizationNode::initTransforms()
 {
-  m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
+  m_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(*this);
   buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*buffer);
 }
@@ -267,11 +267,11 @@ void NeoLocalizationNode::initTransforms()
 void NeoLocalizationNode::initPubSub()
 {
   // Init Subscribers
-  m_sub_scan_topic = create_subscription<sensor_msgs::msg::LaserScan>(m_scan_topic, rclcpp::SensorDataQoS(), std::bind(&NeoLocalizationNode::scan_callback, this, _1));
-  m_sub_map_topic = create_subscription<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::QoS(1).transient_local().reliable(), std::bind(&NeoLocalizationNode::map_callback, this, _1));
-  m_sub_pose_estimate = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(m_initial_pose, rclcpp::QoS(1).reliable(), std::bind(&NeoLocalizationNode::pose_callback, this, _1));
+  m_sub_scan_topic = create_subscription<sensor_msgs::msg::LaserScan>(m_scan_topic, std::bind(&NeoLocalizationNode::scan_callback, this, _1), rclcpp::SensorDataQoS());
+  m_sub_map_topic = create_subscription<nav_msgs::msg::OccupancyGrid>("/map", std::bind(&NeoLocalizationNode::map_callback, this, _1), rclcpp::QoS(1).transient_local().reliable());
+  m_sub_pose_estimate = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(m_initial_pose, std::bind(&NeoLocalizationNode::pose_callback, this, _1), rclcpp::QoS(1).reliable());
   if (m_only_use_odom_enable) {
-    m_sub_only_use_odom = create_subscription<std_msgs::msg::Bool>("/only_use_odom", rclcpp::QoS(10).transient_local().reliable(), std::bind(&NeoLocalizationNode::use_odom_callback, this, _1));
+    m_sub_only_use_odom = create_subscription<std_msgs::msg::Bool>("/only_use_odom", std::bind(&NeoLocalizationNode::use_odom_callback, this, _1), rclcpp::QoS(10).transient_local().reliable());
   }
 
   // Init Publishers

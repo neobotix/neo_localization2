@@ -1,10 +1,13 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 project(neo_localization2)
 
 find_package(ament_cmake REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(nav2_common REQUIRED)
 find_package(nav2_util REQUIRED)
+find_package(nav2_ros_common REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
@@ -37,6 +40,9 @@ target_include_directories(${library_name}
 target_link_libraries(${library_name} PUBLIC
   ${geometry_msgs_TARGETS}
   nav2_util::nav2_util_core
+  nav2_ros_common::nav2_ros_common
+  std_msgs::std_msgs
+  tf2_geometry_msgs::tf2_geometry_msgs
   angles::angles
   ${sensor_msgs_TARGETS}
   ${std_srvs_TARGETS}
@@ -45,7 +51,6 @@ target_link_libraries(${library_name} PUBLIC
   ${nav_msgs_TARGETS}
   tf2_ros::tf2_ros
   tf2::tf2
-  ${nav2_msgs_TARGETS}
 )
 
 target_link_libraries(${library_name} PRIVATE
@@ -88,8 +93,9 @@ ament_export_libraries(${library_name})
 ament_export_dependencies(
   geometry_msgs
   nav_msgs
-  nav2_msgs
   nav2_util
+  nav2_ros_common
+  std_msgs
   rclcpp
   rclcpp_lifecycle
   sensor_msgs
